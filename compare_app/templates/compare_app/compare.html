@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Processor Toolkit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        /* Sidebar Styles */
+        .sidebar { height: 100vh; position: fixed; width: 250px; background: #2c3e50; padding-top: 20px; }
+        .sidebar h4 { color: #fff; text-align: center; margin-bottom: 30px; font-weight: bold; }
+        .sidebar a { display: block; color: #aeb6bf; padding: 15px 20px; text-decoration: none; font-size: 16px; transition: 0.3s;}
+        .sidebar a:hover, .sidebar a.active { background: #1a252f; color: #fff; border-left: 4px solid #3498db; }
+        
+        /* Main Content Styles */
+        .main-content { margin-left: 250px; padding: 30px; }
+        .table-responsive { max-height: 400px; overflow-y: auto; }
+        .tab-section { display: none; } /* Hidden by default */
+        .tab-section.active { display: block; } /* Shown when active */
+
+        /* Loading Overlay Styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 62, 80, 0.9);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .spinner-grow { width: 3rem; height: 3rem; margin: 0 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="text-center text-white">
+            <div class="d-flex justify-content-center mb-3">
+                <div class="spinner-grow text-primary" role="status"></div>
+                <div class="spinner-grow text-success" role="status"></div>
+                <div class="spinner-grow text-warning" role="status"></div>
+            </div>
+            <h2 class="fw-bold">Processing Data...</h2>
+            <p class="text-light">Please wait, analyzing your Excel files.</p>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h4>🛠️ Data Toolkit</h4>
+        <a href="#" id="nav-single" onclick="switchTab('single')" class="{% if active_tab == 'single' %}active{% endif %}">📄 Single File Extract</a>
+        <a href="#" id="nav-compare" onclick="switchTab('compare')" class="{% if active_tab == 'compare' %}active{% endif %}">📊 Compare Two Files</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        
+        {% if error %}
+            <div class="alert alert-danger shadow-sm">{{ error }}</div>
+        {% endif %}
+
+        <!-- ============================================== -->
+        <!-- TAB 1: SINGLE FILE EXTRACTOR -->
+        <!-- ============================================== -->
+        <div id="single" class="tab-section {% if active_tab == 'single' %}active{% endif %}">
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3 class="mb-4">📄 Single Excel File Extractor</h3>
+                <p class="text-muted">Upload a file to find internal duplicates, blanks, and generate a clean Fresh list.</p>
+                
+                <form method="POST" enctype="multipart/form-data" class="process-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="single">
+                    <input type="hidden" name="action" id="action-single" value="process">
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Upload Dirty Excel File</label>
+                            <input type="file" name="file_single" class="form-control" accept=".xlsx, .xls" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Columns to Check</label>
+                        <input type="text" name="columns" class="form-control" value="Name, Phone, State">
+                    </div>
+
+                    <!-- 🟢 YAHAN ADD KIYE HAIN CHECKBOXES -->
+                    <!-- Cleaning Options -->
+                    <div class="mb-4 p-3 border rounded bg-light">
+                        <label class="form-label fw-bold mb-2">Cleaning Options:</label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="remove_duplicates" id="chkDup" value="yes" checked>
+                            <label class="form-check-label fw-bold text-dark" for="chkDup">Remove Duplicates</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="remove_blanks" id="chkBlanks" value="yes" checked>
+                            <label class="form-check-label fw-bold text-dark" for="chkBlanks">Remove Blank Rows</label>
+                        </div>
+                        <!-- 🟢 NAYA CHECKBOX -->
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="remove_invalid_phones" id="chkInvalid" value="yes" checked>
+                            <label class="form-check-label fw-bold text-dark" for="chkInvalid">Remove Invalid Phones (!= 10 digits)</label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary submit-btn">Analyze File</button>
+                        {% if single_success %}
+                            <a href="{{ s_download_uri }}" download="Fresh_Clean_Data.xlsx" class="btn btn-success">⬇️ Download Fresh Clean Data</a>
+                        {% endif %}
+                        <a href="" class="btn btn-outline-danger">Clear Data</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Single File Results -->
+            {% if single_success %}
+            <div class="alert alert-info py-2 shadow-sm d-inline-block mb-3">
+                ⏱️ <strong>Lightning Fast!</strong> Data processed and exported in just <strong>{{ s_execution_time }}</strong>.
+            </div>
+            
+            <!-- 🟢 YAHAN RESULT CARDS KO 3 KI JAGAH 4 KAR DIYA HAI (Blank rows dikhane ke liye) -->
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="card bg-success text-white text-center p-3 shadow-sm h-100">
+                        <h3>{{ s_fresh_count }}</h3><p class="mb-0">Fresh Data</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card bg-warning text-dark text-center p-3 shadow-sm h-100">
+                        <h3>{{ s_duplicate_count }}</h3><p class="mb-0">Duplicates Removed</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card bg-danger text-white text-center p-3 shadow-sm h-100">
+                        <h3>{{ s_blank_rows_removed }}</h3><p class="mb-0">Blank Rows Removed</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card bg-info text-white p-3 shadow-sm h-100">
+                        <h3>{{ s_invalid_phones }}</h3><p class="mb-0 small">Invalid Phones Removed</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card bg-secondary text-white text-center p-3 shadow-sm h-100">
+                        <h3>{{ s_total_blanks }}</h3><p class="mb-0">Total Empty Cells</p>
+                    </div>
+                </div>
+            </div>
+            
+                {% if s_duplicates_table %}
+                    <h5 class="text-warning fw-bold">Internal Duplicates Preview</h5>
+                    <div class="table-responsive shadow-sm rounded">{{ s_duplicates_table|safe }}</div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+
+        <!-- ============================================== -->
+        <!-- TAB 2: EXCEL COMPARE DATA -->
+        <!-- ============================================== -->
+        <div id="compare" class="tab-section {% if active_tab == 'compare' %}active{% endif %}">
+            <div class="bg-white p-4 rounded shadow-sm mb-4">
+                <h3 class="mb-4">📊 Compare Two Excel Files</h3>
+                
+                <form method="POST" enctype="multipart/form-data" class="process-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="compare">
+                    <input type="hidden" name="action" id="action-compare" value="process">
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Upload File 1</label>
+                            <input type="file" name="file1" class="form-control" accept=".xlsx, .xls" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Upload File 2</label>
+                            <input type="file" name="file2" class="form-control" accept=".xlsx, .xls" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Columns to Match</label>
+                        <input type="text" name="columns" class="form-control" value="Name, Phone, State">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary submit-btn">Compare Files</button>
+                        {% if compare_success %}
+                            <a href="{{ c_download_uri }}" download="Compared_Duplicates.xlsx" class="btn btn-success">⬇️ Download Exact Duplicates</a>
+                        {% endif %}
+                        <a href="" class="btn btn-outline-danger">Clear Data</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Compare Results -->
+            {% if compare_success %}
+            <div class="alert alert-info py-2 shadow-sm d-inline-block mb-3">
+                ⏱️ <strong>Lightning Fast!</strong> Files compared and exported in just <strong>{{ c_execution_time }}</strong>.
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-success text-white text-center p-3 shadow-sm">
+                        <h3>{{ c_duplicate_count }}</h3><p class="mb-0">Exact Duplicates Found</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-secondary text-white text-center p-3 shadow-sm">
+                        <h3>{{ c_total_blanks }}</h3><p class="mb-0">Total Blank Cells</p>
+                    </div>
+                </div>
+            </div>
+
+                {% if c_duplicates_table %}
+                    <h5 class="text-success fw-bold">Matched Duplicates Preview</h5>
+                    <div class="table-responsive shadow-sm rounded">{{ c_duplicates_table|safe }}</div>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+    </div>
+
+    <!-- Javascript for Tab Switching and Action Handling -->
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('active');
+        }
+
+        // Loader Logic
+        document.querySelectorAll('.process-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (this.checkValidity()) {
+                    document.getElementById('loading-overlay').style.display = 'flex';
+                    const btn = this.querySelector('.submit-btn');
+                    btn.innerHTML = 'Processing... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
