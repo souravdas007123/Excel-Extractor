@@ -6,19 +6,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f4f7f6; }
-        /* Sidebar Styles */
         .sidebar { height: 100vh; position: fixed; width: 250px; background: #2c3e50; padding-top: 20px; }
         .sidebar h4 { color: #fff; text-align: center; margin-bottom: 30px; font-weight: bold; }
         .sidebar a { display: block; color: #aeb6bf; padding: 15px 20px; text-decoration: none; font-size: 16px; transition: 0.3s;}
         .sidebar a:hover, .sidebar a.active { background: #1a252f; color: #fff; border-left: 4px solid #3498db; }
         
-        /* Main Content Styles */
         .main-content { margin-left: 250px; padding: 30px; }
         .table-responsive { max-height: 400px; overflow-y: auto; }
-        .tab-section { display: none; } /* Hidden by default */
-        .tab-section.active { display: block; } /* Shown when active */
+        .tab-section { display: none; } 
+        .tab-section.active { display: block; } 
 
-        /* Loading Overlay Styles */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -33,11 +30,18 @@
             flex-direction: column;
         }
         .spinner-grow { width: 3rem; height: 3rem; margin: 0 5px; }
+        .results-row .col { min-width: 150px; margin-bottom: 15px; }
+        
+        .accordion-button { font-weight: bold; }
+        .accordion-button:not(.collapsed) { background-color: #e9ecef; color: #212529; }
+        
+        .table th, .table td { text-align: left !important; vertical-align: middle !important; }
+        .table th:first-child, .table td:first-child { font-weight: bold; background-color: rgba(0,0,0,0.05); }
+        .health-score-text { font-size: 3.5rem; line-height: 1; }
     </style>
 </head>
 <body>
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="text-center text-white">
             <div class="d-flex justify-content-center mb-3">
@@ -45,28 +49,24 @@
                 <div class="spinner-grow text-success" role="status"></div>
                 <div class="spinner-grow text-warning" role="status"></div>
             </div>
-            <h2 class="fw-bold">Processing Data...</h2>
+            <h3 class="fw-bold">Processing Data...</h3>
             <p class="text-light">Please wait, analyzing your Excel files.</p>
         </div>
     </div>
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <h4>🛠️ Data Toolkit</h4>
         <a href="#" id="nav-single" onclick="switchTab('single')" class="{% if active_tab == 'single' %}active{% endif %}">📄 Single File Extract</a>
         <a href="#" id="nav-compare" onclick="switchTab('compare')" class="{% if active_tab == 'compare' %}active{% endif %}">📊 Compare Two Files</a>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="main-content">
         
         {% if error %}
             <div class="alert alert-danger shadow-sm">{{ error }}</div>
         {% endif %}
 
-        <!-- ============================================== -->
-        <!-- TAB 1: SINGLE FILE EXTRACTOR -->
-        <!-- ============================================== -->
+        <!-- TAB 1 -->
         <div id="single" class="tab-section {% if active_tab == 'single' %}active{% endif %}">
             <div class="bg-white p-4 rounded shadow-sm mb-4">
                 <h3 class="mb-4">📄 Single Excel File Extractor</h3>
@@ -89,10 +89,15 @@
                         <input type="text" name="columns" class="form-control" value="Name, Phone, State">
                     </div>
 
-                    <!-- 🟢 YAHAN ADD KIYE HAIN CHECKBOXES -->
-                    <!-- Cleaning Options -->
-                    <div class="mb-4 p-3 border rounded bg-light">
-                        <label class="form-label fw-bold mb-2">Cleaning Options:</label><br>
+                    <div class="mb-3 p-3 border border-primary rounded bg-light">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="auto_fix" id="chkAutoFix" value="yes" checked>
+                            <label class="form-check-label fw-bold text-primary" for="chkAutoFix">✨ Auto-Standardize Data (Fix Names, States & clean +91/0 from Phones)</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 border rounded bg-white shadow-sm">
+                        <label class="form-label fw-bold mb-2">Cleaning Options (Delete Rows):</label><br>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="checkbox" name="remove_duplicates" id="chkDup" value="yes" checked>
                             <label class="form-check-label fw-bold text-dark" for="chkDup">Remove Duplicates</label>
@@ -101,7 +106,6 @@
                             <input class="form-check-input" type="checkbox" name="remove_blanks" id="chkBlanks" value="yes" checked>
                             <label class="form-check-label fw-bold text-dark" for="chkBlanks">Remove Blank Rows</label>
                         </div>
-                        <!-- 🟢 NAYA CHECKBOX -->
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="checkbox" name="remove_invalid_phones" id="chkInvalid" value="yes" checked>
                             <label class="form-check-label fw-bold text-dark" for="chkInvalid">Remove Invalid Phones (!= 10 digits)</label>
@@ -109,61 +113,134 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary submit-btn">Analyze File</button>
+                        <button type="submit" class="btn btn-primary submit-btn px-4 fw-bold">Analyze File</button>
                         {% if single_success %}
-                            <a href="{{ s_download_uri }}" download="Fresh_Clean_Data.xlsx" class="btn btn-success">⬇️ Download Fresh Clean Data</a>
+                            <!-- 🟢 MAIN DOWNLOAD BUTTON REMAINS HERE -->
+                            <a href="{{ s_download_uri }}" download="Fresh_Clean_Data.xlsx" class="btn btn-success fw-bold">⬇️ Download Clean Data</a>
                         {% endif %}
                         <a href="" class="btn btn-outline-danger">Clear Data</a>
                     </div>
                 </form>
             </div>
 
-            <!-- Single File Results -->
             {% if single_success %}
-            <div class="alert alert-info py-2 shadow-sm d-inline-block mb-3">
-                ⏱️ <strong>Lightning Fast!</strong> Data processed and exported in just <strong>{{ s_execution_time }}</strong>.
-            </div>
-            
-            <!-- 🟢 YAHAN RESULT CARDS KO 3 KI JAGAH 4 KAR DIYA HAI (Blank rows dikhane ke liye) -->
-            <div class="row mb-4">
-                <div class="col">
-                    <div class="card bg-success text-white text-center p-3 shadow-sm h-100">
-                        <h3>{{ s_fresh_count }}</h3><p class="mb-0">Fresh Data</p>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card bg-warning text-dark text-center p-3 shadow-sm h-100">
-                        <h3>{{ s_duplicate_count }}</h3><p class="mb-0">Duplicates Removed</p>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card bg-danger text-white text-center p-3 shadow-sm h-100">
-                        <h3>{{ s_blank_rows_removed }}</h3><p class="mb-0">Blank Rows Removed</p>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card bg-info text-white p-3 shadow-sm h-100">
-                        <h3>{{ s_invalid_phones }}</h3><p class="mb-0 small">Invalid Phones Removed</p>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card bg-secondary text-white text-center p-3 shadow-sm h-100">
-                        <h3>{{ s_total_blanks }}</h3><p class="mb-0">Total Empty Cells</p>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="alert alert-info py-2 shadow-sm mb-0">
+                    ⏱️ <strong>Lightning Fast!</strong> Processed in <strong>{{ s_execution_time }}</strong>.
                 </div>
             </div>
             
+            <div class="card mb-4 shadow-sm border-0 bg-white">
+                <div class="card-body d-flex align-items-center p-4">
+                    <div class="me-4 text-center border-end pe-4">
+                        <h2 class="health-score-text fw-bold text-{{ s_health_color }} mb-0">{{ s_health_score }}%</h2>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold mb-2">Data Health Score</h4>
+                        <div class="progress" style="height: 25px; border-radius: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ s_health_color }}" role="progressbar" style="width: {{ s_health_score }}%;" aria-valuenow="{{ s_health_score }}" aria-valuemin="0" aria-valuemax="100">
+                                <strong>{{ s_health_score }}% Clean</strong>
+                            </div>
+                        </div>
+                        <p class="text-muted mt-2 mb-0">Score is based on the percentage of valid, duplicate-free rows successfully recovered.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4 results-row flex-wrap">
+                <div class="col"><div class="card bg-primary text-white text-center p-3 shadow-sm h-100"><h3>{{ s_total_rows }}</h3><p class="mb-0">Total Rows</p></div></div>
+                <div class="col"><div class="card bg-success text-white text-center p-3 shadow-sm h-100"><h3>{{ s_fresh_count }}</h3><p class="mb-0">Fresh Data</p></div></div>
+                <div class="col"><div class="card bg-warning text-dark text-center p-3 shadow-sm h-100"><h3>{{ s_duplicate_count }}</h3><p class="mb-0">Duplicates Removed</p></div></div>
+                <div class="col"><div class="card bg-danger text-white text-center p-3 shadow-sm h-100"><h3>{{ s_blank_rows_removed }}</h3><p class="mb-0">Blanks Removed</p></div></div>
+                <div class="col"><div class="card bg-info text-white text-center p-3 shadow-sm h-100"><h3>{{ s_invalid_phones }}</h3><p class="mb-0 small">Invalid Phones</p></div></div>
+                <div class="col"><div class="card bg-secondary text-white text-center p-3 shadow-sm h-100"><h3>{{ s_total_blanks }}</h3><p class="mb-0">Total Empty Cells</p></div></div>
+            </div>
+            
+            <h5 class="fw-bold mt-4 mb-3">🔍 Row Detail Previews & Micro-Exports</h5>
+            <div class="accordion mb-5 shadow-sm" id="dataPreviewAccordion">
+                
                 {% if s_duplicates_table %}
-                    <h5 class="text-warning fw-bold">Internal Duplicates Preview</h5>
-                    <div class="table-responsive shadow-sm rounded">{{ s_duplicates_table|safe }}</div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed text-warning" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            ⚠️ Preview Removed Duplicates ({{ s_duplicate_count }} Rows)
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#dataPreviewAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Showing preview of top 100 rows.</span>
+                                <a href="{{ s_dup_uri }}" download="Removed_Duplicates.xlsx" class="btn btn-sm btn-warning fw-bold shadow-sm">⬇️ Download Only This List</a>
+                            </div>
+                            <div class="table-responsive m-3 border rounded">{{ s_duplicates_table|safe }}</div>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
+
+                {% if s_blanks_table %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            ❌ Preview Removed Blank Rows ({{ s_blank_rows_removed }} Rows)
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#dataPreviewAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Showing preview of top 100 rows.</span>
+                                <a href="{{ s_blank_uri }}" download="Removed_Blank_Rows.xlsx" class="btn btn-sm btn-danger fw-bold shadow-sm">⬇️ Download Only This List</a>
+                            </div>
+                            <div class="table-responsive m-3 border rounded">{{ s_blanks_table|safe }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if s_invalid_table %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed text-info" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            📱 Preview Removed Invalid Phones ({{ s_invalid_phones }} Rows)
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#dataPreviewAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Showing preview of top 100 rows. Send this to the calling team to fix.</span>
+                                <a href="{{ s_invalid_uri }}" download="Removed_Invalid_Phones.xlsx" class="btn btn-sm btn-info text-white fw-bold shadow-sm">⬇️ Download Only This List</a>
+                            </div>
+                            <div class="table-responsive m-3 border rounded">{{ s_invalid_table|safe }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if s_empty_cells_table %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFour">
+                        <button class="accordion-button collapsed text-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            🔘 Preview Rows with Empty Cells (Total: {{ s_total_blanks }} Cells missing)
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#dataPreviewAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Showing preview of top 100 rows.</span>
+                                <a href="{{ s_empty_uri }}" download="Rows_With_Missing_Data.xlsx" class="btn btn-sm btn-secondary fw-bold shadow-sm">⬇️ Download Only This List</a>
+                            </div>
+                            <div class="table-responsive m-3 border rounded">{{ s_empty_cells_table|safe }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
             {% endif %}
         </div>
 
 
-        <!-- ============================================== -->
-        <!-- TAB 2: EXCEL COMPARE DATA -->
-        <!-- ============================================== -->
+        <!-- TAB 2: EXCEL COMPARE -->
         <div id="compare" class="tab-section {% if active_tab == 'compare' %}active{% endif %}">
             <div class="bg-white p-4 rounded shadow-sm mb-4">
                 <h3 class="mb-4">📊 Compare Two Excel Files</h3>
@@ -174,58 +251,46 @@
                     <input type="hidden" name="action" id="action-compare" value="process">
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Upload File 1</label>
-                            <input type="file" name="file1" class="form-control" accept=".xlsx, .xls" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Upload File 2</label>
-                            <input type="file" name="file2" class="form-control" accept=".xlsx, .xls" required>
-                        </div>
+                        <div class="col-md-6"><label class="form-label fw-bold">Upload File 1</label><input type="file" name="file1" class="form-control" accept=".xlsx, .xls" required></div>
+                        <div class="col-md-6"><label class="form-label fw-bold">Upload File 2</label><input type="file" name="file2" class="form-control" accept=".xlsx, .xls" required></div>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Columns to Match</label>
-                        <input type="text" name="columns" class="form-control" value="Name, Phone, State">
-                    </div>
+                    <div class="mb-4"><label class="form-label fw-bold">Columns to Match</label><input type="text" name="columns" class="form-control" value="Name, Phone, State"></div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary submit-btn">Compare Files</button>
+                        <button type="submit" class="btn btn-primary submit-btn px-4 fw-bold">Compare Files</button>
                         {% if compare_success %}
-                            <a href="{{ c_download_uri }}" download="Compared_Duplicates.xlsx" class="btn btn-success">⬇️ Download Exact Duplicates</a>
+                            <a href="{{ c_download_uri }}" download="Comparison_Full_Report.xlsx" class="btn btn-success fw-bold">⬇️ Download Full Report</a>
                         {% endif %}
                         <a href="" class="btn btn-outline-danger">Clear Data</a>
                     </div>
                 </form>
             </div>
 
-            <!-- Compare Results -->
             {% if compare_success %}
             <div class="alert alert-info py-2 shadow-sm d-inline-block mb-3">
                 ⏱️ <strong>Lightning Fast!</strong> Files compared and exported in just <strong>{{ c_execution_time }}</strong>.
             </div>
             <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="card bg-success text-white text-center p-3 shadow-sm">
-                        <h3>{{ c_duplicate_count }}</h3><p class="mb-0">Exact Duplicates Found</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card bg-secondary text-white text-center p-3 shadow-sm">
-                        <h3>{{ c_total_blanks }}</h3><p class="mb-0">Total Blank Cells</p>
-                    </div>
-                </div>
+                <div class="col-md-3 mb-2"><div class="card bg-primary text-white text-center p-3 shadow-sm h-100"><h3>{{ c_total_rows_1 }}</h3><p class="mb-0">File 1 Total Rows</p></div></div>
+                <div class="col-md-3 mb-2"><div class="card bg-info text-white text-center p-3 shadow-sm h-100"><h3>{{ c_total_rows_2 }}</h3><p class="mb-0">File 2 Total Rows</p></div></div>
+                <div class="col-md-3 mb-2"><div class="card bg-success text-white text-center p-3 shadow-sm h-100"><h3>{{ c_duplicate_count }}</h3><p class="mb-0">Exact Duplicates</p></div></div>
+                <div class="col-md-3 mb-2"><div class="card bg-secondary text-white text-center p-3 shadow-sm h-100"><h3>{{ c_total_blanks }}</h3><p class="mb-0">Total Blank Cells</p></div></div>
             </div>
 
                 {% if c_duplicates_table %}
-                    <h5 class="text-success fw-bold">Matched Duplicates Preview</h5>
-                    <div class="table-responsive shadow-sm rounded">{{ c_duplicates_table|safe }}</div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                        <h5 class="text-success fw-bold mb-0">Matched Duplicates Preview (Top 100)</h5>
+                        <a href="{{ c_dup_uri }}" download="Matched_Exact_Duplicates.xlsx" class="btn btn-sm btn-success fw-bold shadow-sm">⬇️ Download Only Duplicates</a>
+                    </div>
+                    <div class="table-responsive shadow-sm border rounded mb-4">{{ c_duplicates_table|safe }}</div>
                 {% endif %}
             {% endif %}
         </div>
         
     </div>
 
-    <!-- Javascript for Tab Switching and Action Handling -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         function switchTab(tabId) {
             document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
@@ -235,7 +300,6 @@
             document.getElementById('nav-' + tabId).classList.add('active');
         }
 
-        // Loader Logic
         document.querySelectorAll('.process-form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 if (this.checkValidity()) {

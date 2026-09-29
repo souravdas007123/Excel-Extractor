@@ -2,7 +2,18 @@ from django.shortcuts import render
 import pandas as pd
 import io
 import base64
-import time  # Naya Import
+import time
+import math
+
+# Helper function to generate Base64 Excel URI for individual downloads
+def generate_excel_uri(df, sheet_name="Data"):
+    if df is None or df.empty:
+        return None
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+    b64_data = base64.b64encode(output.getvalue()).decode('utf-8')
+    return f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_data}"
 
 def excel_dashboard(request):
     context = {'active_tab': 'single'} 
@@ -23,14 +34,17 @@ def excel_dashboard(request):
                 if not file_single:
                     raise ValueError("Please upload an Excel file.")
 
-                # 🟢 TEENO CHECKBOXES KI VALUES
                 remove_duplicates = request.POST.get('remove_duplicates') == 'yes'
                 remove_blanks = request.POST.get('remove_blanks') == 'yes'
                 remove_invalid_phones = request.POST.get('remove_invalid_phones') == 'yes'
+                auto_fix = request.POST.get('auto_fix') == 'yes'
 
                 start_time = time.time()
 
                 df = pd.read_excel(file_single, engine='calamine')
+                total_rows = len(df)
+                
+                df.insert(0, 'Excel Row', df.index + 2)
                 
                 missing_cols = [col for col in columns_to_check if col not in df.columns]
                 if missing_cols:
@@ -38,46 +52,61 @@ def excel_dashboard(request):
 
                 total_blanks = int(df[columns_to_check].isnull().sum().sum())
                 
-                df_check = df.copy()
+                # 🟢 FIX: Remove .0 from Phone numbers early so previews look clean
+                phone_col = None
                 for col in columns_to_check:
-                    df_check[col] = df_check[col].fillna('').astype(str).str.strip().str.lower()
+                    if 'phone' in col.lower() or 'mobile' in col.lower() or 'contact' in col.lower():
+                        phone_col = col
+                        break
+                
+                if phone_col:
+                    # fillna('') is used so blanks don't become 'nan' strings
+                    df[phone_col] = df[phone_col].fillna('').astype(str).str.replace(r'\.0$', '', regex=True)
+
+                df_check = df.copy()
+                
+                for col in columns_to_check:
+                    df_check[col] = df_check[col].fillna('').astype(str).str.strip()
+                    
+                    if auto_fix:
+                        if 'name' in col.lower() or 'state' in col.lower() or 'city' in col.lower():
+                            df_check[col] = df_check[col].str.title()
+                    else:
+                        df_check[col] = df_check[col].str.lower()
 
                 valid_indices = df.index
-                blank_rows_count = 0
-                duplicate_count = 0
-                invalid_phone_count = 0
+                
+                blanks_df = pd.DataFrame()
+                invalid_phones_df = pd.DataFrame()
                 duplicates_df = pd.DataFrame()
+
+                has_empty_cells = df_check[columns_to_check].eq('').any(axis=1)
+                empty_cells_df = df.loc[has_empty_cells]
 
                 # --- 1. BLANK DATA REMOVAL ---
                 if remove_blanks:
                     is_blank = df_check[columns_to_check].eq('').any(axis=1)
                     blank_indices = df_check[is_blank].index
-                    blank_rows_count = len(blank_indices)
+                    blanks_df = df.loc[blank_indices]
                     valid_indices = valid_indices.difference(blank_indices)
                     df_check = df_check.loc[valid_indices]
 
-                # --- 2. INVALID PHONE REMOVAL (Naya Logic) ---
-                if remove_invalid_phones:
-                    # Phone column dhoondo (Name mein phone, mobile ya contact ho)
-                    phone_col = None
-                    for col in columns_to_check:
-                        if 'phone' in col.lower() or 'mobile' in col.lower() or 'contact' in col.lower():
-                            phone_col = col
-                            break
+                # --- 2. PHONE FIXING & REMOVAL ---
+                if phone_col:
+                    # Yahan humne .0 already hata diya hai original df mein, so string direct use kar sakte hain
+                    phone_str = df_check[phone_col].astype(str)
                     
-                    if phone_col:
-                        # STEP 1: Excel ka trailing '.0' hatao pehle
-                        phone_str = df_check[phone_col].astype(str).str.replace(r'\.0$', '', regex=True)
-                        
-                        # STEP 2: Ab baaki ke non-digits (jaise -, +, spaces) hatao
-                        only_numbers = phone_str.str.replace(r'\D', '', regex=True)
-                        
-                        # STEP 3: Agar digits 0 se zyada hain but 10 se kam hain, toh wo invalid hai
+                    if auto_fix:
+                        phone_str = phone_str.str.replace(r'^(?:\+?91|0+)', '', regex=True)
+                    
+                    only_numbers = phone_str.str.replace(r'\D', '', regex=True)
+                    
+                    df_check.loc[valid_indices, phone_col] = only_numbers.loc[valid_indices]
+
+                    if remove_invalid_phones:
                         is_invalid = (only_numbers.str.len() > 0) & (only_numbers.str.len() != 10)
-                        
                         invalid_indices = df_check[is_invalid].index
-                        invalid_phone_count = len(invalid_indices)
-                        
+                        invalid_phones_df = df.loc[invalid_indices]
                         valid_indices = valid_indices.difference(invalid_indices)
                         df_check = df_check.loc[valid_indices]
 
@@ -85,42 +114,56 @@ def excel_dashboard(request):
                 if remove_duplicates:
                     is_duplicate = df_check.duplicated(subset=columns_to_check, keep='first')
                     duplicate_indices = df_check[is_duplicate].index
-                    
-                    # Original dataframe se duplicate rows nikalna taaki report me dikha sakein
                     duplicates_df = df.loc[duplicate_indices]
-                    duplicate_count = len(duplicates_df)
-                    
                     valid_indices = valid_indices.difference(duplicate_indices)
 
-                # Final Fresh Data based on surviving indices
-                fresh_df = df.loc[valid_indices]
+                # Final Fresh Data 
+                fresh_df = df_check.loc[valid_indices]
+                fresh_df_export = fresh_df.drop(columns=['Excel Row'])
 
-                # Excel Creation
+                health_score = math.floor((len(fresh_df) / total_rows) * 100) if total_rows > 0 else 0
+                
+                if health_score >= 90: health_color = 'success'
+                elif health_score >= 70: health_color = 'warning'
+                else: health_color = 'danger'
+
+                # Main File Export
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    fresh_df.to_excel(writer, sheet_name='Fresh Clean Data', index=False)
+                    fresh_df_export.to_excel(writer, sheet_name='Fresh Clean Data', index=False)
                     if not duplicates_df.empty:
                         duplicates_df.to_excel(writer, sheet_name='Found Duplicates', index=False)
-                
                 b64_excel = base64.b64encode(output.getvalue()).decode('utf-8')
-                excel_uri = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_excel}"
+                main_excel_uri = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_excel}"
 
                 end_time = time.time()
                 raw_seconds = end_time - start_time
-                mins = int(raw_seconds // 60)
-                secs = round(raw_seconds % 60, 2)
-                formatted_time = f"{mins} min {secs} sec"
+                mins, secs = int(raw_seconds // 60), round(raw_seconds % 60, 2)
 
                 context.update({
                     'single_success': True,
-                    's_duplicate_count': duplicate_count,
-                    's_blank_rows_removed': blank_rows_count,
-                    's_invalid_phones': invalid_phone_count, # 🟢 Naya variable for frontend
+                    's_health_score': health_score,
+                    's_health_color': health_color,
+                    's_total_rows': total_rows,
+                    's_duplicate_count': len(duplicates_df),
+                    's_blank_rows_removed': len(blanks_df),
+                    's_invalid_phones': len(invalid_phones_df),
                     's_total_blanks': total_blanks,
                     's_fresh_count': len(fresh_df),
-                    's_download_uri': excel_uri,
-                    's_execution_time': formatted_time,
-                    's_duplicates_table': duplicates_df.head(100).to_html(classes='table table-warning table-striped', index=False) if not duplicates_df.empty else None
+                    's_download_uri': main_excel_uri,
+                    's_execution_time': f"{mins} min {secs} sec",
+                    
+                    # 🟢 FIX: Added na_rep='' to remove "NaN" text from UI tables
+                    's_duplicates_table': duplicates_df.head(100).to_html(classes='table table-warning table-striped mb-0', index=False, justify='left', na_rep='') if not duplicates_df.empty else None,
+                    's_blanks_table': blanks_df.head(100).to_html(classes='table table-danger table-striped mb-0', index=False, justify='left', na_rep='') if not blanks_df.empty else None,
+                    's_invalid_table': invalid_phones_df.head(100).to_html(classes='table table-info table-striped mb-0', index=False, justify='left', na_rep='') if not invalid_phones_df.empty else None,
+                    's_empty_cells_table': empty_cells_df.head(100).to_html(classes='table table-secondary table-striped mb-0', index=False, justify='left', na_rep='') if not empty_cells_df.empty else None,
+                    
+                    # Individual Download Links
+                    's_dup_uri': generate_excel_uri(duplicates_df, "Removed Duplicates"),
+                    's_blank_uri': generate_excel_uri(blanks_df, "Blank Rows"),
+                    's_invalid_uri': generate_excel_uri(invalid_phones_df, "Invalid Phones"),
+                    's_empty_uri': generate_excel_uri(empty_cells_df, "Rows with Empty Cells")
                 })
 
             # ==========================================
@@ -132,47 +175,61 @@ def excel_dashboard(request):
                 if not file1 or not file2:
                     raise ValueError("Please upload both files.")
 
-                start_time = time.time() # ⏱️ Timer Start
+                start_time = time.time()
 
                 df1 = pd.read_excel(file1, engine='calamine', usecols=columns_to_check)
                 df2 = pd.read_excel(file2, engine='calamine', usecols=columns_to_check)
 
+                df1.insert(0, 'File 1 Row', df1.index + 2)
+                df2.insert(0, 'File 2 Row', df2.index + 2)
+                
+                # 🟢 FIX: Compare mode mein bhi Phone column ka .0 remove karo
+                phone_col = None
+                for col in columns_to_check:
+                    if 'phone' in col.lower() or 'mobile' in col.lower() or 'contact' in col.lower():
+                        phone_col = col
+                        break
+                
+                if phone_col:
+                    if phone_col in df1.columns:
+                        df1[phone_col] = df1[phone_col].fillna('').astype(str).str.replace(r'\.0$', '', regex=True)
+                    if phone_col in df2.columns:
+                        df2[phone_col] = df2[phone_col].fillna('').astype(str).str.replace(r'\.0$', '', regex=True)
+
                 total_blanks = int(df1.isnull().sum().sum() + df2.isnull().sum().sum())
 
-                df1_clean = df1.copy()
-                df2_clean = df2.copy()
+                df1_clean, df2_clean = df1.copy(), df2.copy()
                 for col in columns_to_check:
                     df1_clean[col] = df1_clean[col].fillna('').astype(str).str.strip().str.lower()
                     df2_clean[col] = df2_clean[col].fillna('').astype(str).str.strip().str.lower()
 
                 duplicates = pd.merge(df1_clean, df2_clean, on=columns_to_check, how='inner')
-                duplicate_count = len(duplicates)
 
+                # Main Export
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     if not duplicates.empty:
                         duplicates.to_excel(writer, sheet_name='Exact Duplicates', index=False)
                     else:
                         pd.DataFrame(['No duplicates found'], columns=['Message']).to_excel(writer, index=False)
-                
                 b64_excel = base64.b64encode(output.getvalue()).decode('utf-8')
-                excel_uri = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_excel}"
+                main_excel_uri = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_excel}"
 
                 end_time = time.time()
                 raw_seconds = end_time - start_time
-                
-                # Naya logic Min aur Sec ke liye
-                mins = int(raw_seconds // 60)
-                secs = round(raw_seconds % 60, 2)
-                formatted_time = f"{mins} min {secs} sec"
+                mins, secs = int(raw_seconds // 60), round(raw_seconds % 60, 2)
 
                 context.update({
                     'compare_success': True,
-                    'c_duplicate_count': duplicate_count,
+                    'c_total_rows_1': len(df1),
+                    'c_total_rows_2': len(df2),
+                    'c_duplicate_count': len(duplicates),
                     'c_total_blanks': total_blanks,
-                    'c_download_uri': excel_uri,
-                    'c_execution_time': formatted_time,  # Ab yahan formatted time jayega
-                    'c_duplicates_table': duplicates.head(100).to_html(classes='table table-success table-striped', index=False) if not duplicates.empty else None
+                    'c_download_uri': main_excel_uri,
+                    'c_execution_time': f"{mins} min {secs} sec",
+                    # 🟢 FIX: Added na_rep='' here too
+                    'c_duplicates_table': duplicates.head(100).to_html(classes='table table-success table-striped mb-0', index=False, justify='left', na_rep='') if not duplicates.empty else None,
+                    'c_dup_uri': generate_excel_uri(duplicates, "Exact Duplicates")
                 })
 
         except Exception as e:
