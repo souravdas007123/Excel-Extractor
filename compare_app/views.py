@@ -1,10 +1,61 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 import pandas as pd
 import io
 import base64
 import time
 import math
 
+# ==========================================
+# 1. LANDING PAGE VIEW
+# ==========================================
+def landing_page(request):
+    # Agar user already logged in hai, toh seedha tool par bhej do
+    if request.user.is_authenticated:
+        return redirect('app')
+    return render(request, 'compare_app/landing.html') # landing page ka html yahan hai
+
+# ==========================================
+# 2. REGISTER VIEW
+# ==========================================
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user) # Register hote hi automatically login ho jayega
+            return redirect('app')
+    else:
+        form = UserCreationForm()
+    return render(request, 'compare_app/register.html', {'form': form})
+
+# ==========================================
+# 3. LOGIN VIEW
+# ==========================================
+def user_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('app')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'compare_app/login.html', {'form': form})
+
+# ==========================================
+# 4. LOGOUT VIEW
+# ==========================================
+def user_logout(request):
+    logout(request)
+    return redirect('home')
+
+
+# ==========================================
+# Helper function aur excel_dashboard function yahan se shuru hoga...
+# (Aapka purana generate_excel_uri aur excel_dashboard code yahan rahega)
+# ==========================================
 # Helper function to generate Base64 Excel URI for individual downloads
 def generate_excel_uri(df, sheet_name="Data"):
     if df is None or df.empty:
@@ -44,6 +95,21 @@ def excel_dashboard(request):
 
                 df = pd.read_excel(file_single, engine='calamine')
                 total_rows = len(df)
+                # ==== NEW USAGE TRACKER LOGIC ====
+                FREE_ROW_LIMIT = 1000
+                is_pro = False
+
+                # Agar user logged in NAHI hai ya fir PRO NAHI hai
+                if not request.user.is_authenticated or not request.user.userprofile.is_pro:
+                    if total_rows > FREE_ROW_LIMIT:
+                        # Frontend ko error bhej do ki limit cross ho gayi
+                        raise ValueError(f"Limit Reached! Free version supports up to {FREE_ROW_LIMIT} rows. Your file has {total_rows} rows. Please Login & Upgrade to PRO.")
+                # ==================================
+                
+                # Agar pass ho gaya, toh total rows count update kardo (Agar logged in hai)
+                if request.user.is_authenticated:
+                    request.user.userprofile.total_rows_processed += total_rows
+                    request.user.userprofile.save()
                 
                 df.insert(0, 'Excel Row', df.index + 2)
                 

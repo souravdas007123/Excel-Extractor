@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFlow Toolkit | Clean & Merge Excel Data in Seconds</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-bg: #f8fafc;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            background-color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .navbar-brand { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px; }
+        .nav-link { font-weight: 500; color: var(--text-muted); transition: 0.3s; }
+        .nav-link:hover { color: var(--primary-blue); }
+
+        /* Buttons */
+        .btn-custom-primary {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            border: none;
+            box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+        }
+        .btn-custom-primary:hover {
+            background-color: var(--primary-hover);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .btn-custom-outline {
+            color: var(--text-dark);
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+            background: white;
+        }
+        .btn-custom-outline:hover {
+            border-color: var(--text-dark);
+            background: var(--secondary-bg);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            padding: 100px 0 80px;
+            background: linear-gradient(180deg, var(--secondary-bg) 0%, #ffffff 100%);
+        }
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 24px;
+        }
+        .hero-title span {
+            background: linear-gradient(90deg, #2563eb, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            transition: 0.3s;
+            height: 100%;
+        }
+        .feature-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: var(--primary-blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        /* Pricing Section */
+        .pricing-section { background-color: var(--secondary-bg); padding: 80px 0; }
+        .pricing-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 40px;
+            background: white;
+            position: relative;
+        }
+        .pricing-pro {
+            border: 2px solid var(--primary-blue);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.1);
+        }
+        .badge-popular {
+            position: absolute; top: -12px; right: 30px;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            color: white; font-size: 0.75rem; font-weight: 700;
+            padding: 6px 16px; border-radius: 20px; text-transform: uppercase;
+        }
+        .price { font-size: 3rem; font-weight: 800; color: var(--text-dark); margin: 20px 0; }
+        .price span { font-size: 1rem; font-weight: 500; color: var(--text-muted); }
+        .feature-list { list-style: none; padding: 0; margin-bottom: 30px; }
+        .feature-list li { margin-bottom: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
+        .feature-list li i { color: #10b981; font-weight: bold; }
+
+        /* Footer */
+        footer { background: #0f172a; color: #94a3b8; padding: 40px 0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top py-3">
+        <div class="container">
+            <a class="navbar-brand text-dark" href="#">
+                <span style="font-size: 1.4rem;">⚡</span> DataFlow
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#pricing">Pricing</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="/login">Log In</a></li>
+                    <li class="nav-item">
+                        <a class="btn btn-custom-primary" style="padding: 8px 20px;" href="/app">Try for Free</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-9 mt-5">
+                    <span class="badge bg-light text-primary border border-primary mb-3 py-2 px-3 rounded-pill fw-semibold">
+                        🚀 The Ultimate Data Cleaning Tool
+                    </span>
+                    <h1 class="hero-title">
+                        Clean, Format, and Merge <br> Excel Data in <span>Seconds.</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Stop wasting hours on manual data entry. Automatically remove duplicates, fix invalid phone numbers, and cross-check datasets instantly with our lightning-fast web processor.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a href="/app" class="btn btn-custom-primary">Start Analyzing for Free</a>
+                        <a href="#pricing" class="btn btn-custom-outline">View Lifetime Deal</a>
+                    </div>
+                    <p class="text-muted mt-3 small">No credit card required for the free version.</p>
+                </div>
+            </div>
+            
+            <!-- Dashboard Mockup Image Placeholder -->
+            <div class="row justify-content-center mt-5 pt-3">
+                <div class="col-lg-10">
+                    <div class="bg-white p-2 rounded-4 shadow-lg border">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Dashboard Preview" class="img-fluid rounded-3 opacity-75" style="height: 400px; width: 100%; object-fit: cover; object-position: top;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 my-5">
+        <div class="container">
+            <div class="text-center mb-5 pb-3">
+                <h2 class="fw-bold" style="font-size: 2.5rem; letter-spacing: -1px;">Everything you need for clean data</h2>
+                <p class="text-muted">Powerful automation tools built specifically for sales, marketing, and data teams.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">🧹</div>
+                        <h4 class="fw-bold mb-3">Smart Auto-Fix</h4>
+                        <p class="text-muted mb-0">Automatically standardizes text to Title Case and intelligently cleans "+91" or "0" prefixes from Indian phone numbers without breaking the data.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚠️</div>
+                        <h4 class="fw-bold mb-3">Deduplication Engine</h4>
+                        <p class="text-muted mb-0">Instantly scan thousands of rows to find and remove exact duplicates, saving you from embarrassing double-calls or emails.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4 class="fw-bold mb-3">Cross-File Comparison</h4>
+                        <p class="text-muted mb-0">Upload two different Excel sheets and let the system find matching records between them in seconds. Perfect for cross-referencing leads.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold text-dark" style="font-size: 2.5rem; letter-spacing: -1px;">Simple, Transparent Pricing</h2>
+                <p class="text-muted">Start for free, upgrade once for lifetime access. No monthly subscriptions.</p>
+            </div>
+            
+            <div class="row justify-content-center g-4">
+                <!-- Free Tier -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card h-100">
+                        <h4 class="fw-bold text-dark">Basic Free</h4>
+                        <p class="text-muted">Perfect for quick, small tasks.</p>
+                        <div class="price">₹0 <span>/ forever</span></div>
+                        
+                        <ul class="feature-list mt-4">
+                            <li>✓ Process up to 1,000 rows</li>
+                            <li>✓ Remove Duplicates</li>
+                            <li>✓ Fix Phone Numbers</li>
+                            <li>✓ Download Cleaned File</li>
+                            <li class="text-black-50">✗ No Cross-File Comparison</li>
+                            <li class="text-black-50">✗ No Premium Support</li>
+                        </ul>
+                        
+                        <a href="/app" class="btn btn-custom-outline w-100 mt-3">Start Free</a>
+                    </div>
+                </div>
+
+                <!-- Lifetime Pro Tier -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card pricing-pro h-100">
+                        <div class="badge-popular">Lifetime Deal</div>
+                        <h4 class="fw-bold text-primary">Pro Lifetime</h4>
+                        <p class="text-muted">For professionals and agencies.</p>
+                        <div class="price">₹1,999 <span>/ one-time</span></div>
+                        
+                        <ul class="feature-list mt-4">
+                            <li>✓ <strong>Unlimited</strong> Rows Processing</li>
+                            <li>✓ Advanced Auto-Fixing Engine</li>
+                            <li>✓ Cross-File Compare Tool Unlocked</li>
+                            <li>✓ Priority Email Support</li>
+                            <li>✓ All Future Updates Free</li>
+                            <li>✓ No Monthly Fees Ever</li>
+                        </ul>
+                        
+                        <a href="/register" class="btn btn-custom-primary w-100 mt-3">Get Lifetime Access</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5" style="background: var(--primary-blue);">
+        <div class="container text-center py-5">
+            <h2 class="fw-bold text-white mb-3" style="font-size: 2.5rem; letter-spacing: -1px;">Ready to clean your messy data?</h2>
+            <p class="text-white-50 mb-4 fs-5">Join hundreds of professionals who save hours every week.</p>
+            <a href="/app" class="btn btn-light btn-lg fw-bold text-primary px-5 rounded-3 shadow">Try The Tool Now</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <p class="mb-2">© 2026 DataFlow Toolkit. All rights reserved.</p>
+            <p class="small text-muted mb-0">Built for productivity.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
