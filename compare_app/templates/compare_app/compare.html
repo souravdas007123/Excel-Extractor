@@ -3,184 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <title>Data Processor Toolkit</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; }
-        .sidebar { height: 100vh; position: fixed; width: 250px; background: #2c3e50; padding-top: 20px; }
-        .sidebar h4 { color: #fff; text-align: center; margin-bottom: 30px; font-weight: bold; }
-        .sidebar a { display: block; color: #aeb6bf; padding: 15px 20px; text-decoration: none; font-size: 16px; transition: 0.3s;}
-        .sidebar a:hover, .sidebar a.active { background: #1a252f; color: #fff; border-left: 4px solid #3498db; }
-        
-        .main-content { margin-left: 250px; padding: 30px; }
-        .table-responsive { max-height: 400px; overflow-y: auto; }
-        .tab-section { display: none; } 
-        .tab-section.active { display: block; } 
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(44, 62, 80, 0.9);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
+        :root {
+            --bg-body: #f8fafc;
+            --bg-sidebar: #0f172a;
+            --sidebar-hover: #1e293b;
+            --primary-blue: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --info-cyan: #0ea5e9;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
         }
-        .spinner-grow { width: 3rem; height: 3rem; margin: 0 5px; }
-        .results-row .col { min-width: 150px; margin-bottom: 15px; }
+
+        body { 
+            background-color: var(--bg-body); 
+            font-family: 'Inter', sans-serif; 
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- SIDEBAR STYLING --- */
+        .sidebar { 
+            height: 100vh; position: fixed; width: 260px; 
+            background: var(--bg-sidebar); 
+            padding: 30px 20px; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar h4 { 
+            color: #ffffff; text-align: left; margin-bottom: 40px; 
+            font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar a { 
+            display: block; color: #94a3b8; padding: 14px 18px; 
+            text-decoration: none; font-size: 0.95rem; font-weight: 500;
+            border-radius: 10px; transition: all 0.3s ease; margin-bottom: 8px;
+        }
+        .sidebar a:hover { background: var(--sidebar-hover); color: #f1f5f9; }
+        .sidebar a.active { 
+            background: var(--primary-blue); color: #ffffff; 
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); 
+        }
+
+        /* --- MAIN CONTENT & CONTAINERS --- */
+        .main-content { margin-left: 260px; padding: 40px; max-width: 1400px; }
+        .tab-section { display: none; animation: fadeIn 0.4s ease-in-out; } 
+        .tab-section.active { display: block; } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { 
+            border: none; border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03); 
+            background: #ffffff; margin-bottom: 24px;
+        }
+
+        /* --- FORMS & BUTTONS --- */
+        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .form-control { 
+            border-radius: 10px; padding: 0.75rem 1.25rem; 
+            border: 1px solid var(--border-color); font-size: 0.95rem; 
+            box-shadow: none; transition: all 0.2s;
+        }
+        .form-control:focus { 
+            border-color: var(--primary-blue); 
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
+        }
+        .form-check-input { width: 1.25em; height: 1.25em; margin-top: 0.15em; cursor: pointer; }
+        .form-check-input:checked { background-color: var(--primary-blue); border-color: var(--primary-blue); }
+        .form-check-label { cursor: pointer; padding-left: 0.3rem; font-weight: 500; color: #475569; }
+
+        .btn { border-radius: 10px; padding: 0.6rem 1.5rem; font-weight: 600; transition: all 0.2s; letter-spacing: 0.3px; }
+        .btn-primary { background: var(--primary-blue); border: none; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-success { background: var(--success-green); border: none; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
+        .btn-outline-danger { border-radius: 10px; border-width: 1.5px; } /* Updated Reset Button Style */
+
+        /* --- STAT CARDS --- */
+        .stat-card { background: #ffffff; border: 1px solid var(--border-color); padding: 24px; }
+        .stat-card h3 { font-weight: 700; font-size: 2.2rem; margin-bottom: 4px; letter-spacing: -1px; }
+        .stat-card p { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .accordion-button { font-weight: bold; }
-        .accordion-button:not(.collapsed) { background-color: #e9ecef; color: #212529; }
+        .stat-primary h3 { color: var(--primary-blue); }
+        .stat-success h3 { color: var(--success-green); }
+        .stat-warning h3 { color: var(--warning-orange); }
+        .stat-danger h3 { color: var(--danger-red); }
+        .stat-info h3 { color: var(--info-cyan); }
+        .stat-secondary h3 { color: var(--text-muted); }
+
+        /* --- TABLES & ACCORDIONS --- */
+        .accordion-item { 
+            border: 1px solid var(--border-color); border-radius: 12px !important; 
+            margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+        }
+        .accordion-button { font-weight: 600; padding: 1.25rem 1.5rem; background: #ffffff; color: var(--text-main); }
+        .accordion-button:not(.collapsed) { background: #f8fafc; color: var(--text-main); box-shadow: none; border-bottom: 1px solid var(--border-color); }
+        .accordion-button:focus { box-shadow: none; }
         
-        .table th, .table td { text-align: left !important; vertical-align: middle !important; }
-        .table th:first-child, .table td:first-child { font-weight: bold; background-color: rgba(0,0,0,0.05); }
-        .health-score-text { font-size: 3.5rem; line-height: 1; }
+        .table-responsive { max-height: 400px; overflow-y: auto; margin: 0; }
+        .table { margin-bottom: 0; font-size: 0.9rem; }
+        .table thead th { 
+            background: #f8fafc !important; color: var(--text-muted) !important; 
+            text-transform: uppercase; font-size: 0.75rem; font-weight: 600; 
+            letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 2px solid var(--border-color);
+        }
+        .table td { padding: 12px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 500;}
+        
+        /* Soften pandas injected table classes */
+        .table-warning { --bs-table-bg: #fffbeb; --bs-table-color: #92400e; }
+        .table-danger { --bs-table-bg: #fef2f2; --bs-table-color: #991b1b; }
+        .table-info { --bs-table-bg: #f0f9ff; --bs-table-color: #075985; }
+        .table-secondary { --bs-table-bg: #f8fafc; --bs-table-color: #334155; }
+        .table-success { --bs-table-bg: #ecfdf5; --bs-table-color: #065f46; }
+
+        /* --- LOADING OVERLAY --- */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+            z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .progress.custom-progress { 
+            height: 12px; border-radius: 100px; background-color: rgba(255,255,255,0.1); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .custom-progress .progress-bar { background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s ease; font-size: 0.7rem; font-weight: bold; }
+        .health-score-text { font-size: 4rem; line-height: 1; letter-spacing: -2px; }
+        
+        .highlight-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- UPDATED LOADING OVERLAY WITH SMOOTH & SLOW PROGRESS BAR -->
+    <!-- UPDATED LOADING OVERLAY WITH PREMIUM PROGRESS BAR -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="text-center text-white" style="width: 50%; max-width: 500px;">
-            <div class="d-flex justify-content-center mb-3">
-                <div class="spinner-grow text-primary" role="status"></div>
-                <div class="spinner-grow text-success" role="status"></div>
-                <div class="spinner-grow text-warning" role="status"></div>
+            <div class="d-flex justify-content-center mb-4 gap-2">
+                <div class="spinner-grow text-primary" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
+                <div class="spinner-grow text-info" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
+                <div class="spinner-grow text-success" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
             </div>
-            <h3 class="fw-bold mb-3">Processing Data...</h3>
+            <h3 class="fw-bold mb-4" style="letter-spacing: -0.5px;">Processing Data</h3>
             
             <!-- Progress Bar -->
-            <div class="progress mb-3" style="height: 20px; border-radius: 10px; background-color: rgba(255,255,255,0.2);">
-                <div id="dynamic-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            <div class="progress custom-progress mb-3">
+                <div id="dynamic-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
             </div>
             
             <!-- Changing Text -->
-            <h5 id="dynamic-loading-text" class="text-light">Uploading your file to secure server...</h5>
-            <p class="text-white-50 mt-2 small">Large files may take 2 to 4 minutes. Please do not refresh or close this tab.</p>
+            <h5 id="dynamic-loading-text" class="text-light fw-normal" style="font-size: 1.1rem;">Uploading your file securely...</h5>
+            <p class="text-white-50 mt-3 small">Large files may take 2 to 4 minutes. Please do not refresh or close this tab.</p>
         </div>
     </div>
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
-        <h4>🛠️ Data Toolkit</h4>
+        <h4><span style="font-size: 1.5rem;">⚡</span> DataFlow Toolkit</h4>
         <a href="#" id="nav-single" onclick="switchTab('single')" class="{% if active_tab == 'single' %}active{% endif %}">📄 Single File Extract</a>
         <a href="#" id="nav-compare" onclick="switchTab('compare')" class="{% if active_tab == 'compare' %}active{% endif %}">📊 Compare Two Files</a>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div class="main-content">
         
         {% if error %}
-            <div class="alert alert-danger shadow-sm">{{ error }}</div>
+            <div class="alert alert-danger shadow-sm border-0 rounded-3 mb-4"><span class="fw-bold">Error:</span> {{ error }}</div>
         {% endif %}
 
-        <!-- TAB 1 -->
+        <!-- TAB 1: SINGLE EXCEL -->
         <div id="single" class="tab-section {% if active_tab == 'single' %}active{% endif %}">
-            <div class="bg-white p-4 rounded shadow-sm mb-4">
-                <h3 class="mb-4">📄 Single Excel File Extractor</h3>
-                <p class="text-muted">Upload a file to find internal duplicates, blanks, and generate a clean Fresh list.</p>
+            
+            <div class="card p-4 p-md-5">
+                <h3 class="fw-bold mb-2 text-dark" style="letter-spacing: -0.5px;">Single File Extractor</h3>
+                <p class="text-muted mb-4">Upload a dataset to automatically identify duplicates, missing values, and generate a sanitized list.</p>
                 
                 <form method="POST" enctype="multipart/form-data" class="process-form">
                     {% csrf_token %}
                     <input type="hidden" name="mode" value="single">
                     <input type="hidden" name="action" id="action-single" value="process">
 
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <label class="form-label fw-bold">Upload Dirty Excel File</label>
-                            <input type="file" name="file_single" class="form-control" accept=".xlsx, .xls" required>
+                    <div class="row mb-4">
+                        <div class="col-lg-8">
+                            <label class="form-label">Upload Dirty Dataset (Excel)</label>
+                            <input type="file" name="file_single" class="form-control bg-light" accept=".xlsx, .xls" required>
                         </div>
                     </div>
                     
+                    <div class="row mb-4">
+                        <div class="col-lg-8">
+                            <label class="form-label">Key Columns to Check <span class="text-muted fw-normal">(Comma separated)</span></label>
+                            <input type="text" name="columns" class="form-control" value="Name, Phone, State">
+                        </div>
+                    </div>
+
+                    <div class="highlight-box mb-4">
+                        <div class="form-check form-switch d-flex align-items-center gap-2">
+                            <input class="form-check-input fs-5 m-0" type="checkbox" name="auto_fix" id="chkAutoFix" value="yes" checked>
+                            <label class="form-check-label fw-bold text-primary mb-0" for="chkAutoFix">Auto-Standardize Data</label>
+                        </div>
+                        <p class="text-muted small mt-2 mb-0 ms-4 ps-2">Automatically formats names to Title Case and intelligently cleans "+91" or "0" prefixes from phone numbers.</p>
+                    </div>
+
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Columns to Check</label>
-                        <input type="text" name="columns" class="form-control" value="Name, Phone, State">
-                    </div>
-
-                    <div class="mb-3 p-3 border border-primary rounded bg-light">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="auto_fix" id="chkAutoFix" value="yes" checked>
-                            <label class="form-check-label fw-bold text-primary" for="chkAutoFix">✨ Auto-Standardize Data (Fix Names, States & clean +91/0 from Phones)</label>
+                        <label class="form-label mb-3">Data Deletion Rules</label>
+                        <div class="d-flex flex-wrap gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remove_duplicates" id="chkDup" value="yes" checked>
+                                <label class="form-check-label" for="chkDup">Remove Duplicates</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remove_blanks" id="chkBlanks" value="yes" checked>
+                                <label class="form-check-label" for="chkBlanks">Remove Blank Rows</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remove_invalid_phones" id="chkInvalid" value="yes" checked>
+                                <label class="form-check-label" for="chkInvalid">Remove Invalid Phones</label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-4 p-3 border rounded bg-white shadow-sm">
-                        <label class="form-label fw-bold mb-2">Cleaning Options (Delete Rows):</label><br>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="remove_duplicates" id="chkDup" value="yes" checked>
-                            <label class="form-check-label fw-bold text-dark" for="chkDup">Remove Duplicates</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="remove_blanks" id="chkBlanks" value="yes" checked>
-                            <label class="form-check-label fw-bold text-dark" for="chkBlanks">Remove Blank Rows</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="remove_invalid_phones" id="chkInvalid" value="yes" checked>
-                            <label class="form-check-label fw-bold text-dark" for="chkInvalid">Remove Invalid Phones (!= 10 digits)</label>
-                        </div>
-                    </div>
+                    <hr class="text-muted opacity-25 mb-4">
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary submit-btn px-4 fw-bold">Analyze File</button>
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <button type="submit" class="btn btn-primary submit-btn px-4">Analyze Dataset</button>
                         {% if single_success %}
-                            <a href="{{ s_download_uri }}" download="Fresh_Clean_Data.xlsx" class="btn btn-success fw-bold">⬇️ Download Clean Data</a>
+                            <a href="{{ s_download_uri }}" download="Fresh_Clean_Data.xlsx" class="btn btn-success d-flex align-items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                                Download Clean Data
+                            </a>
                         {% endif %}
-                        <a href="" class="btn btn-outline-danger">Clear Data</a>
+                        <!-- CHANGED TO RED RESET BUTTON -->
+                        <a href="" class="btn btn-outline-danger fw-semibold ms-auto">Reset</a>
                     </div>
                 </form>
             </div>
 
             {% if single_success %}
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="alert alert-info py-2 shadow-sm mb-0">
-                    ⏱️ <strong>Lightning Fast!</strong> Total time taken: <strong id="actual-time-single">{{ s_execution_time }}</strong>.
+            <div class="alert bg-white border shadow-sm py-3 mb-4 d-flex align-items-center gap-3 rounded-4">
+                <span class="fs-4">⏱️</span> 
+                <div>
+                    <strong class="text-dark">Processing Complete!</strong> 
+                    <span class="text-muted">Total time taken: <strong id="actual-time-single" class="text-primary">{{ s_execution_time }}</strong></span>
                 </div>
             </div>
             
-            <div class="card mb-4 shadow-sm border-0 bg-white">
-                <div class="card-body d-flex align-items-center p-4">
-                    <div class="me-4 text-center border-end pe-4">
+            <div class="card p-4 mb-4">
+                <div class="d-flex align-items-center flex-wrap gap-4">
+                    <div class="text-center pe-4 border-end">
                         <h2 class="health-score-text fw-bold text-{{ s_health_color }} mb-0">{{ s_health_score }}%</h2>
                     </div>
-                    <div class="flex-grow-1">
-                        <h4 class="fw-bold mb-2">Data Health Score</h4>
-                        <div class="progress" style="height: 25px; border-radius: 10px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ s_health_color }}" role="progressbar" style="width: {{ s_health_score }}%;" aria-valuenow="{{ s_health_score }}" aria-valuemin="0" aria-valuemax="100">
-                                <strong>{{ s_health_score }}% Clean</strong>
-                            </div>
+                    <div class="flex-grow-1 min-vw-50">
+                        <h4 class="fw-bold mb-2">Overall Data Health</h4>
+                        <div class="progress" style="height: 12px; border-radius: 10px; background: #f1f5f9;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ s_health_color }}" role="progressbar" style="width: {{ s_health_score }}%;" aria-valuenow="{{ s_health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
-                        <p class="text-muted mt-2 mb-0">Score is based on the percentage of valid, duplicate-free rows successfully recovered.</p>
+                        <p class="text-muted mt-2 mb-0 small">Based on the percentage of valid, duplicate-free rows successfully recovered from the original file.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="row mb-4 results-row flex-wrap">
-                <div class="col"><div class="card bg-primary text-white text-center p-3 shadow-sm h-100"><h3>{{ s_total_rows }}</h3><p class="mb-0">Total Rows</p></div></div>
-                <div class="col"><div class="card bg-success text-white text-center p-3 shadow-sm h-100"><h3>{{ s_fresh_count }}</h3><p class="mb-0">Fresh Data</p></div></div>
-                <div class="col"><div class="card bg-warning text-dark text-center p-3 shadow-sm h-100"><h3>{{ s_duplicate_count }}</h3><p class="mb-0">Duplicates Removed</p></div></div>
-                <div class="col"><div class="card bg-danger text-white text-center p-3 shadow-sm h-100"><h3>{{ s_blank_rows_removed }}</h3><p class="mb-0">Blanks Removed</p></div></div>
-                <div class="col"><div class="card bg-info text-white text-center p-3 shadow-sm h-100"><h3>{{ s_invalid_phones }}</h3><p class="mb-0 small">Invalid Phones</p></div></div>
-                <div class="col"><div class="card bg-secondary text-white text-center p-3 shadow-sm h-100"><h3>{{ s_total_blanks }}</h3><p class="mb-0">Total Empty Cells</p></div></div>
+            <div class="row g-3 mb-5 results-row">
+                <div class="col-md-4 col-sm-6"><div class="card stat-card stat-primary text-center h-100"><h3>{{ s_total_rows }}</h3><p class="mb-0">Total Rows</p></div></div>
+                <div class="col-md-4 col-sm-6"><div class="card stat-card stat-success text-center h-100"><h3>{{ s_fresh_count }}</h3><p class="mb-0">Fresh Clean Data</p></div></div>
+                <div class="col-md-4 col-sm-6"><div class="card stat-card stat-warning text-center h-100"><h3>{{ s_duplicate_count }}</h3><p class="mb-0">Duplicates Removed</p></div></div>
+                <div class="col-md-4 col-sm-6"><div class="card stat-card stat-danger text-center h-100"><h3>{{ s_blank_rows_removed }}</h3><p class="mb-0">Blanks Removed</p></div></div>
+                <div class="col-md-4 col-sm-6"><div class="card stat-card stat-info text-center h-100"><h3>{{ s_invalid_phones }}</h3><p class="mb-0">Invalid Phones</p></div></div>
+                <div class="col-md-4 col-sm-6"><div class="card stat-card stat-secondary text-center h-100"><h3>{{ s_total_blanks }}</h3><p class="mb-0">Missing Cells Found</p></div></div>
             </div>
             
-            <h5 class="fw-bold mt-4 mb-3">🔍 Row Detail Previews & Micro-Exports</h5>
-            <div class="accordion mb-5 shadow-sm" id="dataPreviewAccordion">
+            <div class="d-flex align-items-center mb-4 gap-2">
+                <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">Data Validation Reports</h4>
+                <span class="badge bg-light text-muted border">Top 100 Preview</span>
+            </div>
+            
+            <div class="accordion" id="dataPreviewAccordion">
                 
                 {% if s_duplicates_table %}
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingOne">
-                        <button class="accordion-button collapsed text-warning" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                            ⚠️ Preview Removed Duplicates ({{ s_duplicate_count }} Rows)
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            <span class="text-warning fw-bold me-2">⚠️</span> Removed Duplicates <span class="badge bg-warning text-dark ms-2">{{ s_duplicate_count }}</span>
                         </button>
                     </h2>
                     <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#dataPreviewAccordion">
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Showing preview of top 100 rows.</span>
-                                <a href="{{ s_dup_uri }}" download="Removed_Duplicates.xlsx" class="btn btn-sm btn-warning fw-bold shadow-sm">⬇️ Download Only This List</a>
+                                <a href="{{ s_dup_uri }}" download="Removed_Duplicates.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-warning">⬇️ Download File</a>
                             </div>
-                            <div class="table-responsive m-3 border rounded">{{ s_duplicates_table|safe }}</div>
+                            <div class="table-responsive">{{ s_duplicates_table|safe }}</div>
                         </div>
                     </div>
                 </div>
@@ -189,17 +307,17 @@
                 {% if s_blanks_table %}
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingTwo">
-                        <button class="accordion-button collapsed text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            ❌ Preview Removed Blank Rows ({{ s_blank_rows_removed }} Rows)
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            <span class="text-danger fw-bold me-2">❌</span> Blank Rows Removed <span class="badge bg-danger ms-2">{{ s_blank_rows_removed }}</span>
                         </button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#dataPreviewAccordion">
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Showing preview of top 100 rows.</span>
-                                <a href="{{ s_blank_uri }}" download="Removed_Blank_Rows.xlsx" class="btn btn-sm btn-danger fw-bold shadow-sm">⬇️ Download Only This List</a>
+                                <a href="{{ s_blank_uri }}" download="Removed_Blank_Rows.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-danger">⬇️ Download File</a>
                             </div>
-                            <div class="table-responsive m-3 border rounded">{{ s_blanks_table|safe }}</div>
+                            <div class="table-responsive">{{ s_blanks_table|safe }}</div>
                         </div>
                     </div>
                 </div>
@@ -208,17 +326,17 @@
                 {% if s_invalid_table %}
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingThree">
-                        <button class="accordion-button collapsed text-info" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                            📱 Preview Removed Invalid Phones ({{ s_invalid_phones }} Rows)
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            <span class="text-info fw-bold me-2">📱</span> Invalid Phone Numbers <span class="badge bg-info ms-2">{{ s_invalid_phones }}</span>
                         </button>
                     </h2>
                     <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#dataPreviewAccordion">
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">Showing preview of top 100 rows. Send this to the calling team to fix.</span>
-                                <a href="{{ s_invalid_uri }}" download="Removed_Invalid_Phones.xlsx" class="btn btn-sm btn-info text-white fw-bold shadow-sm">⬇️ Download Only This List</a>
+                                <span class="text-muted small">Review and send back to the sourcing team.</span>
+                                <a href="{{ s_invalid_uri }}" download="Removed_Invalid_Phones.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-info">⬇️ Download File</a>
                             </div>
-                            <div class="table-responsive m-3 border rounded">{{ s_invalid_table|safe }}</div>
+                            <div class="table-responsive">{{ s_invalid_table|safe }}</div>
                         </div>
                     </div>
                 </div>
@@ -227,17 +345,17 @@
                 {% if s_empty_cells_table %}
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingFour">
-                        <button class="accordion-button collapsed text-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                            🔘 Preview Rows with Empty Cells (Total: {{ s_total_blanks }} Cells missing)
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            <span class="text-secondary fw-bold me-2">🔘</span> Rows with Missing Cells <span class="badge bg-secondary ms-2">{{ s_total_blanks }} gaps</span>
                         </button>
                     </h2>
                     <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#dataPreviewAccordion">
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Showing preview of top 100 rows.</span>
-                                <a href="{{ s_empty_uri }}" download="Rows_With_Missing_Data.xlsx" class="btn btn-sm btn-secondary fw-bold shadow-sm">⬇️ Download Only This List</a>
+                                <a href="{{ s_empty_uri }}" download="Rows_With_Missing_Data.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-secondary">⬇️ Download File</a>
                             </div>
-                            <div class="table-responsive m-3 border rounded">{{ s_empty_cells_table|safe }}</div>
+                            <div class="table-responsive">{{ s_empty_cells_table|safe }}</div>
                         </div>
                     </div>
                 </div>
@@ -250,47 +368,74 @@
 
         <!-- TAB 2: EXCEL COMPARE -->
         <div id="compare" class="tab-section {% if active_tab == 'compare' %}active{% endif %}">
-            <div class="bg-white p-4 rounded shadow-sm mb-4">
-                <h3 class="mb-4">📊 Compare Two Excel Files</h3>
+            <div class="card p-4 p-md-5 mb-4">
+                <h3 class="fw-bold mb-2 text-dark" style="letter-spacing: -0.5px;">Compare Two Datasets</h3>
+                <p class="text-muted mb-4">Upload two separate files to instantly find matching rows based on your specified columns.</p>
                 
                 <form method="POST" enctype="multipart/form-data" class="process-form">
                     {% csrf_token %}
                     <input type="hidden" name="mode" value="compare">
                     <input type="hidden" name="action" id="action-compare" value="process">
 
-                    <div class="row mb-3">
-                        <div class="col-md-6"><label class="form-label fw-bold">Upload File 1</label><input type="file" name="file1" class="form-control" accept=".xlsx, .xls" required></div>
-                        <div class="col-md-6"><label class="form-label fw-bold">Upload File 2</label><input type="file" name="file2" class="form-control" accept=".xlsx, .xls" required></div>
+                    <div class="row mb-4 g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Source File 1</label>
+                            <input type="file" name="file1" class="form-control bg-light" accept=".xlsx, .xls" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Target File 2</label>
+                            <input type="file" name="file2" class="form-control bg-light" accept=".xlsx, .xls" required>
+                        </div>
                     </div>
-                    <div class="mb-4"><label class="form-label fw-bold">Columns to Match</label><input type="text" name="columns" class="form-control" value="Name, Phone, State"></div>
+                    
+                    <div class="mb-5">
+                        <label class="form-label">Match Columns <span class="text-muted fw-normal">(Comma separated)</span></label>
+                        <input type="text" name="columns" class="form-control" value="Name, Phone, State">
+                    </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary submit-btn px-4 fw-bold">Compare Files</button>
+                    <hr class="text-muted opacity-25 mb-4">
+
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <button type="submit" class="btn btn-primary submit-btn px-4">Run Comparison</button>
                         {% if compare_success %}
-                            <a href="{{ c_download_uri }}" download="Comparison_Full_Report.xlsx" class="btn btn-success fw-bold">⬇️ Download Full Report</a>
+                            <a href="{{ c_download_uri }}" download="Comparison_Full_Report.xlsx" class="btn btn-success d-flex align-items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                                Download Full Report
+                            </a>
                         {% endif %}
-                        <a href="" class="btn btn-outline-danger">Clear Data</a>
+                        <!-- CHANGED TO RED RESET BUTTON -->
+                        <a href="" class="btn btn-outline-danger fw-semibold ms-auto">Reset</a>
                     </div>
                 </form>
             </div>
 
             {% if compare_success %}
-            <div class="alert alert-info py-2 shadow-sm d-inline-block mb-3">
-                ⏱️ <strong>Lightning Fast!</strong> Total time taken: <strong id="actual-time-compare">{{ c_execution_time }}</strong>.
+            <div class="alert bg-white border shadow-sm py-3 mb-4 d-flex align-items-center gap-3 rounded-4">
+                <span class="fs-4">⏱️</span> 
+                <div>
+                    <strong class="text-dark">Processing Complete!</strong> 
+                    <span class="text-muted">Total time taken: <strong id="actual-time-compare" class="text-primary">{{ c_execution_time }}</strong></span>
+                </div>
             </div>
-            <div class="row mb-4">
-                <div class="col-md-3 mb-2"><div class="card bg-primary text-white text-center p-3 shadow-sm h-100"><h3>{{ c_total_rows_1 }}</h3><p class="mb-0">File 1 Total Rows</p></div></div>
-                <div class="col-md-3 mb-2"><div class="card bg-info text-white text-center p-3 shadow-sm h-100"><h3>{{ c_total_rows_2 }}</h3><p class="mb-0">File 2 Total Rows</p></div></div>
-                <div class="col-md-3 mb-2"><div class="card bg-success text-white text-center p-3 shadow-sm h-100"><h3>{{ c_duplicate_count }}</h3><p class="mb-0">Exact Duplicates</p></div></div>
-                <div class="col-md-3 mb-2"><div class="card bg-secondary text-white text-center p-3 shadow-sm h-100"><h3>{{ c_total_blanks }}</h3><p class="mb-0">Total Blank Cells</p></div></div>
+
+            <div class="row g-3 mb-5">
+                <div class="col-md-3 col-sm-6"><div class="card stat-card stat-primary text-center h-100"><h3>{{ c_total_rows_1 }}</h3><p class="mb-0">File 1 Rows</p></div></div>
+                <div class="col-md-3 col-sm-6"><div class="card stat-card stat-info text-center h-100"><h3>{{ c_total_rows_2 }}</h3><p class="mb-0">File 2 Rows</p></div></div>
+                <div class="col-md-3 col-sm-6"><div class="card stat-card stat-success text-center h-100"><h3>{{ c_duplicate_count }}</h3><p class="mb-0">Matched Rows</p></div></div>
+                <div class="col-md-3 col-sm-6"><div class="card stat-card stat-secondary text-center h-100"><h3>{{ c_total_blanks }}</h3><p class="mb-0">Total Empty Cells</p></div></div>
             </div>
 
                 {% if c_duplicates_table %}
-                    <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
-                        <h5 class="text-success fw-bold mb-0">Matched Duplicates Preview (Top 100)</h5>
-                        <a href="{{ c_dup_uri }}" download="Matched_Exact_Duplicates.xlsx" class="btn btn-sm btn-success fw-bold shadow-sm">⬇️ Download Only Duplicates</a>
+                    <div class="card overflow-hidden">
+                        <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="text-success fw-bold mb-1">Matched Records Preview</h5>
+                                <p class="text-muted small mb-0">Showing top 100 rows found in both files.</p>
+                            </div>
+                            <a href="{{ c_dup_uri }}" download="Matched_Exact_Duplicates.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-success">⬇️ Download Records</a>
+                        </div>
+                        <div class="table-responsive m-0">{{ c_duplicates_table|safe }}</div>
                     </div>
-                    <div class="table-responsive shadow-sm border rounded mb-4">{{ c_duplicates_table|safe }}</div>
                 {% endif %}
             {% endif %}
         </div>
@@ -331,12 +476,12 @@
             }
         });
 
-        // --- UPDATED: ULTRA-SMOOTH, REALISTIC, NON-STOP PROGRESS LOGIC ---
+        // --- ULTRA-SMOOTH, REALISTIC, NON-STOP PROGRESS LOGIC ---
         function startLoadingSimulation() {
             const progressBar = document.getElementById('dynamic-progress-bar');
             const statusText = document.getElementById('dynamic-loading-text');
             
-            // Text messages to loop through
+            // Expanded Professional Messages
             const messages = [
                 "Initializing data processor...",
                 "Reading Excel rows and columns...",
@@ -365,32 +510,30 @@
             let progress = 0;
             let messageIndex = 0;
 
-            // Update Progress Bar - Every 1.5 Seconds
-            // It will take roughly 4-5 minutes to hit 99% using this math.
+            // Update Progress Bar
             const progressInterval = setInterval(() => {
                 if (progress < 30) {
-                    progress += Math.random() * 2 + 1; // Faster at start (1 to 3%)
+                    progress += Math.random() * 2 + 1; 
                 } else if (progress < 60) {
-                    progress += Math.random() * 1.5 + 0.5; // Starts slowing down (0.5 to 2%)
+                    progress += Math.random() * 1.5 + 0.5; 
                 } else if (progress < 85) {
-                    progress += Math.random() * 0.8 + 0.2; // Getting slower (0.2 to 1%)
+                    progress += Math.random() * 0.8 + 0.2; 
                 } else if (progress < 95) {
-                    progress += Math.random() * 0.3 + 0.1; // Very slow (0.1 to 0.4%)
+                    progress += Math.random() * 0.3 + 0.1; 
                 } else if (progress < 99) {
-                    progress += Math.random() * 0.1 + 0.01; // Crawling near the end (0.01 to 0.11%)
+                    progress += Math.random() * 0.1 + 0.01; 
                 }
                 
-                if (progress >= 99.5) progress = 99; // Never hit 100% until backend is actually done
+                if (progress >= 99.5) progress = 99; 
 
-                let currentVal = progress.toFixed(1); // Keeps 1 decimal place to show continuous movement
+                let currentVal = progress.toFixed(1); 
                 progressBar.style.width = currentVal + "%";
                 progressBar.innerText = currentVal + "%";
                 progressBar.setAttribute('aria-valuenow', currentVal);
-            }, 1500); // 1.5 second tick
+            }, 1500); 
 
-            // Update Text Messages - Loop continuously every 10 seconds
+            // Loop text updates
             const textInterval = setInterval(() => {
-                // Modulo operator ensures it loops back to the first message if it runs out
                 statusText.innerText = messages[messageIndex % messages.length];
                 messageIndex++;
             }, 10000); 
@@ -403,10 +546,10 @@
                     sessionStorage.setItem("real_process_start_time", Date.now());
 
                     document.getElementById('loading-overlay').style.display = 'flex';
-                    startLoadingSimulation(); // Start the new logic
+                    startLoadingSimulation();
 
                     const btn = this.querySelector('.submit-btn');
-                    btn.innerHTML = 'Processing... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
                     btn.classList.add('disabled');
                     btn.style.pointerEvents = 'none';
                 }
