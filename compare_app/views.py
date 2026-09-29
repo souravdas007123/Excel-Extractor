@@ -39,7 +39,8 @@ def excel_dashboard(request):
                 remove_invalid_phones = request.POST.get('remove_invalid_phones') == 'yes'
                 auto_fix = request.POST.get('auto_fix') == 'yes'
 
-                start_time = time.time()
+                # Use perf_counter for more accurate internal backend timing
+                start_time = time.perf_counter()
 
                 df = pd.read_excel(file_single, engine='calamine')
                 total_rows = len(df)
@@ -52,7 +53,7 @@ def excel_dashboard(request):
 
                 total_blanks = int(df[columns_to_check].isnull().sum().sum())
                 
-                # 🟢 FIX: Remove .0 from Phone numbers early so previews look clean
+                # FIX: Remove .0 from Phone numbers early so previews look clean
                 phone_col = None
                 for col in columns_to_check:
                     if 'phone' in col.lower() or 'mobile' in col.lower() or 'contact' in col.lower():
@@ -91,15 +92,19 @@ def excel_dashboard(request):
                     valid_indices = valid_indices.difference(blank_indices)
                     df_check = df_check.loc[valid_indices]
 
-                # --- 2. PHONE FIXING & REMOVAL ---
+                # --- 2. SMART PHONE FIXING & REMOVAL ---
                 if phone_col:
-                    # Yahan humne .0 already hata diya hai original df mein, so string direct use kar sakte hain
                     phone_str = df_check[phone_col].astype(str)
                     
-                    if auto_fix:
-                        phone_str = phone_str.str.replace(r'^(?:\+?91|0+)', '', regex=True)
-                    
+                    # Step 1: Pehle saare spaces, dashes ya + signs hata lo, sirf numbers rakho
                     only_numbers = phone_str.str.replace(r'\D', '', regex=True)
+                    
+                    if auto_fix:
+                        # Step 2: '91' ko SIRF tab hatao jab uske theek baad 10 digits hon (total 12 digit number)
+                        only_numbers = only_numbers.str.replace(r'^91(?=\d{10}$)', '', regex=True)
+                        
+                        # Step 3: Starting ka '0' SIRF tab hatao jab uske theek baad 10 digits hon (total 11 digit number)
+                        only_numbers = only_numbers.str.replace(r'^0+(?=\d{10}$)', '', regex=True)
                     
                     df_check.loc[valid_indices, phone_col] = only_numbers.loc[valid_indices]
 
@@ -136,7 +141,7 @@ def excel_dashboard(request):
                 b64_excel = base64.b64encode(output.getvalue()).decode('utf-8')
                 main_excel_uri = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_excel}"
 
-                end_time = time.time()
+                end_time = time.perf_counter()
                 raw_seconds = end_time - start_time
                 mins, secs = int(raw_seconds // 60), round(raw_seconds % 60, 2)
 
@@ -151,9 +156,8 @@ def excel_dashboard(request):
                     's_total_blanks': total_blanks,
                     's_fresh_count': len(fresh_df),
                     's_download_uri': main_excel_uri,
-                    's_execution_time': f"{mins} min {secs} sec",
+                    's_execution_time': f"{mins} min {secs} sec", # Backend time fallback
                     
-                    # 🟢 FIX: Added na_rep='' to remove "NaN" text from UI tables
                     's_duplicates_table': duplicates_df.head(100).to_html(classes='table table-warning table-striped mb-0', index=False, justify='left', na_rep='') if not duplicates_df.empty else None,
                     's_blanks_table': blanks_df.head(100).to_html(classes='table table-danger table-striped mb-0', index=False, justify='left', na_rep='') if not blanks_df.empty else None,
                     's_invalid_table': invalid_phones_df.head(100).to_html(classes='table table-info table-striped mb-0', index=False, justify='left', na_rep='') if not invalid_phones_df.empty else None,
@@ -175,7 +179,7 @@ def excel_dashboard(request):
                 if not file1 or not file2:
                     raise ValueError("Please upload both files.")
 
-                start_time = time.time()
+                start_time = time.perf_counter()
 
                 df1 = pd.read_excel(file1, engine='calamine', usecols=columns_to_check)
                 df2 = pd.read_excel(file2, engine='calamine', usecols=columns_to_check)
@@ -183,7 +187,6 @@ def excel_dashboard(request):
                 df1.insert(0, 'File 1 Row', df1.index + 2)
                 df2.insert(0, 'File 2 Row', df2.index + 2)
                 
-                # 🟢 FIX: Compare mode mein bhi Phone column ka .0 remove karo
                 phone_col = None
                 for col in columns_to_check:
                     if 'phone' in col.lower() or 'mobile' in col.lower() or 'contact' in col.lower():
@@ -215,7 +218,7 @@ def excel_dashboard(request):
                 b64_excel = base64.b64encode(output.getvalue()).decode('utf-8')
                 main_excel_uri = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64_excel}"
 
-                end_time = time.time()
+                end_time = time.perf_counter()
                 raw_seconds = end_time - start_time
                 mins, secs = int(raw_seconds // 60), round(raw_seconds % 60, 2)
 
@@ -226,8 +229,7 @@ def excel_dashboard(request):
                     'c_duplicate_count': len(duplicates),
                     'c_total_blanks': total_blanks,
                     'c_download_uri': main_excel_uri,
-                    'c_execution_time': f"{mins} min {secs} sec",
-                    # 🟢 FIX: Added na_rep='' here too
+                    'c_execution_time': f"{mins} min {secs} sec", # Backend time fallback
                     'c_duplicates_table': duplicates.head(100).to_html(classes='table table-success table-striped mb-0', index=False, justify='left', na_rep='') if not duplicates.empty else None,
                     'c_dup_uri': generate_excel_uri(duplicates, "Exact Duplicates")
                 })
