@@ -2,97 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Data Processor Toolkit</title>
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #f8fafc;
-            --bg-sidebar: #0f172a;
-            --sidebar-hover: #1e293b;
-            --primary-blue: #2563eb;
-            --primary-hover: #1d4ed8;
-            --success-green: #10b981;
-            --warning-orange: #f59e0b;
-            --danger-red: #ef4444;
-            --info-cyan: #0ea5e9;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
+            --bg-body: #f8fafc; --bg-sidebar: #0f172a; --sidebar-hover: #1e293b;
+            --primary-blue: #2563eb; --primary-hover: #1d4ed8; --success-green: #10b981;
+            --warning-orange: #f59e0b; --danger-red: #ef4444; --info-cyan: #0ea5e9;
+            --text-main: #334155; --text-muted: #64748b; --border-color: #e2e8f0;
         }
+        body { background-color: var(--bg-body); font-family: 'Inter', sans-serif; color: var(--text-main); -webkit-font-smoothing: antialiased; }
 
-        body { 
-            background-color: var(--bg-body); 
-            font-family: 'Inter', sans-serif; 
-            color: var(--text-main);
-            -webkit-font-smoothing: antialiased;
+        /* SIDEBAR */
+        .sidebar {
+            height: 100vh; position: fixed; width: 260px; background: var(--bg-sidebar);
+            padding: 30px 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; overflow-y: auto;
         }
-
-        /* --- SIDEBAR STYLING --- */
-        .sidebar { 
-            height: 100vh; position: fixed; width: 260px; 
-            background: var(--bg-sidebar); 
-            padding: 30px 20px; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-        .sidebar h4 { 
-            color: #ffffff; text-align: left; margin-bottom: 40px; 
-            font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .sidebar a { 
-            display: block; color: #94a3b8; padding: 14px 18px; 
-            text-decoration: none; font-size: 0.95rem; font-weight: 500;
-            border-radius: 10px; transition: all 0.3s ease; margin-bottom: 8px;
+        .sidebar h4 { color: #fff; text-align: left; margin-bottom: 40px; font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+        .sidebar a {
+            display: block; color: #94a3b8; padding: 14px 18px; text-decoration: none; font-size: 0.95rem;
+            font-weight: 500; border-radius: 10px; transition: all 0.3s ease; margin-bottom: 8px;
         }
         .sidebar a:hover { background: var(--sidebar-hover); color: #f1f5f9; }
-        .sidebar a.active { 
-            background: var(--primary-blue); color: #ffffff; 
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); 
-        }
+        .sidebar a.active { background: var(--primary-blue); color: #fff; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.3); }
 
-        /* --- MAIN CONTENT & CONTAINERS --- */
-        .main-content { margin-left: 260px; padding: 40px; max-width: 1400px; }
-        .tab-section { display: none; animation: fadeIn 0.4s ease-in-out; } 
-        .tab-section.active { display: block; } 
+        .sidebar-bottom { margin-top: auto; padding-top: 16px; border-top: 1px solid #1e293b; }
+        .user-box { background: #1e293b; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; font-size: 0.85rem; color: #94a3b8; line-height: 1.6; }
+        .user-box .uname { color: #fff; font-weight: 600; font-size: 0.95rem; }
+        .user-box .plan-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 10px; border-radius: 100px; background: rgba(148,163,184,0.2); color: #cbd5e1; margin-left: 6px; }
+        .user-box .plan-badge.pro { background: rgba(16,185,129,0.2); color: #34d399; }
+        .user-box .rows { color: #fff; font-weight: 600; }
+        .sidebar a.btn-upgrade { background: linear-gradient(90deg, #2563eb, #06b6d4); color: #fff; text-align: center; font-weight: 600; margin-bottom: 8px; }
+        .sidebar a.btn-upgrade:hover { color: #fff; opacity: 0.92; }
+        .sidebar a.btn-logout { color: #f87171; margin-bottom: 0; }
+        .sidebar a.btn-logout:hover { background: rgba(239,68,68,0.12); color: #fca5a5; }
+
+        /* MAIN */
+        .main-content { margin-left: 260px; padding: 0px 3rem; max-width: 1400px; }
+        .tab-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .tab-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { 
-            border: none; border-radius: 16px; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03); 
-            background: #ffffff; margin-bottom: 24px;
-        }
+        .card { border: none; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03); background: #fff; margin-bottom: 24px; }
 
-        /* --- FORMS & BUTTONS --- */
+        /* FORMS & BUTTONS */
         .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; margin-bottom: 0.5rem; }
-        .form-control { 
-            border-radius: 10px; padding: 0.75rem 1.25rem; 
-            border: 1px solid var(--border-color); font-size: 0.95rem; 
-            box-shadow: none; transition: all 0.2s;
-        }
-        .form-control:focus { 
-            border-color: var(--primary-blue); 
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
-        }
+        .form-control { border-radius: 10px; padding: 0.75rem 1.25rem; border: 1px solid var(--border-color); font-size: 0.95rem; box-shadow: none; transition: all 0.2s; }
+        .form-control:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
         .form-check-input { width: 1.25em; height: 1.25em; margin-top: 0.15em; cursor: pointer; }
         .form-check-input:checked { background-color: var(--primary-blue); border-color: var(--primary-blue); }
         .form-check-label { cursor: pointer; padding-left: 0.3rem; font-weight: 500; color: #475569; }
-
         .btn { border-radius: 10px; padding: 0.6rem 1.5rem; font-weight: 600; transition: all 0.2s; letter-spacing: 0.3px; }
-        .btn-primary { background: var(--primary-blue); border: none; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
+        .btn-primary { background: var(--primary-blue); border: none; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.3); }
         .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-success { background: var(--success-green); border: none; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
-        .btn-outline-danger { border-radius: 10px; border-width: 1.5px; } /* Updated Reset Button Style */
+        .btn-success { background: var(--success-green); border: none; box-shadow: 0 4px 6px -1px rgba(16,185,129,0.3); }
+        .btn-outline-danger { border-radius: 10px; border-width: 1.5px; }
 
-        /* --- STAT CARDS --- */
-        .stat-card { background: #ffffff; border: 1px solid var(--border-color); padding: 24px; }
+        /* STAT CARDS */
+        .stat-card { background: #fff; border: 1px solid var(--border-color); padding: 24px; }
         .stat-card h3 { font-weight: 700; font-size: 2.2rem; margin-bottom: 4px; letter-spacing: -1px; }
         .stat-card p { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-        
         .stat-primary h3 { color: var(--primary-blue); }
         .stat-success h3 { color: var(--success-green); }
         .stat-warning h3 { color: var(--warning-orange); }
@@ -100,49 +74,33 @@
         .stat-info h3 { color: var(--info-cyan); }
         .stat-secondary h3 { color: var(--text-muted); }
 
-        /* --- TABLES & ACCORDIONS --- */
-        .accordion-item { 
-            border: 1px solid var(--border-color); border-radius: 12px !important; 
-            margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
-        }
-        .accordion-button { font-weight: 600; padding: 1.25rem 1.5rem; background: #ffffff; color: var(--text-main); }
+        /* TABLES & ACCORDIONS */
+        .accordion-item { border: 1px solid var(--border-color); border-radius: 12px !important; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .accordion-button { font-weight: 600; padding: 1.25rem 1.5rem; background: #fff; color: var(--text-main); }
         .accordion-button:not(.collapsed) { background: #f8fafc; color: var(--text-main); box-shadow: none; border-bottom: 1px solid var(--border-color); }
         .accordion-button:focus { box-shadow: none; }
-        
         .table-responsive { max-height: 400px; overflow-y: auto; margin: 0; }
         .table { margin-bottom: 0; font-size: 0.9rem; }
-        .table thead th { 
-            background: #f8fafc !important; color: var(--text-muted) !important; 
-            text-transform: uppercase; font-size: 0.75rem; font-weight: 600; 
-            letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 2px solid var(--border-color);
-        }
-        .table td { padding: 12px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 500;}
-        
-        /* Soften pandas injected table classes */
+        .table thead th { background: #f8fafc !important; color: var(--text-muted) !important; text-transform: uppercase; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 2px solid var(--border-color); }
+        .table td { padding: 12px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
         .table-warning { --bs-table-bg: #fffbeb; --bs-table-color: #92400e; }
         .table-danger { --bs-table-bg: #fef2f2; --bs-table-color: #991b1b; }
         .table-info { --bs-table-bg: #f0f9ff; --bs-table-color: #075985; }
         .table-secondary { --bs-table-bg: #f8fafc; --bs-table-color: #334155; }
         .table-success { --bs-table-bg: #ecfdf5; --bs-table-color: #065f46; }
 
-        /* --- LOADING OVERLAY --- */
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
-            z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;
-        }
-        .progress.custom-progress { 
-            height: 12px; border-radius: 100px; background-color: rgba(255,255,255,0.1); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-        }
+        /* LOADING OVERLAY */
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .progress.custom-progress { height: 12px; border-radius: 100px; background-color: rgba(255,255,255,0.1); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .custom-progress .progress-bar { background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s ease; font-size: 0.7rem; font-weight: bold; }
         .health-score-text { font-size: 4rem; line-height: 1; letter-spacing: -2px; }
-        
         .highlight-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; }
+        #health-bar { transition: width 1s ease; }
     </style>
 </head>
 <body>
 
-    <!-- UPDATED LOADING OVERLAY WITH PREMIUM PROGRESS BAR -->
+    <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="text-center text-white" style="width: 50%; max-width: 500px;">
             <div class="d-flex justify-content-center mb-4 gap-2">
@@ -151,13 +109,9 @@
                 <div class="spinner-grow text-success" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
             </div>
             <h3 class="fw-bold mb-4" style="letter-spacing: -0.5px;">Processing Data</h3>
-            
-            <!-- Progress Bar -->
             <div class="progress custom-progress mb-3">
                 <div id="dynamic-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
             </div>
-            
-            <!-- Changing Text -->
             <h5 id="dynamic-loading-text" class="text-light fw-normal" style="font-size: 1.1rem;">Uploading your file securely...</h5>
             <p class="text-white-50 mt-3 small">Large files may take 2 to 4 minutes. Please do not refresh or close this tab.</p>
         </div>
@@ -166,24 +120,66 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
         <h4><span style="font-size: 1.5rem;">⚡</span> DataFlow Toolkit</h4>
+
         <a href="#" id="nav-single" onclick="switchTab('single')" class="{% if active_tab == 'single' %}active{% endif %}">📄 Single File Extract</a>
         <a href="#" id="nav-compare" onclick="switchTab('compare')" class="{% if active_tab == 'compare' %}active{% endif %}">📊 Compare Two Files</a>
+
+        <div class="sidebar-bottom">
+            {% if user.is_authenticated %}
+                <div class="user-box">
+                    <div>
+                        <span class="uname">👤 {{ user.username }}</span>
+                        <span class="plan-badge {% if is_pro %}pro{% endif %}">{% if is_pro %}PRO{% else %}FREE{% endif %}</span>
+                    </div>
+                    <div>Rows processed: <span class="rows">{{ total_rows_processed }}</span></div>
+                    {% if not is_pro %}
+                        <div>Limit: {{ free_row_limit }} rows/file</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if not is_pro %}
+                <a href="{% url 'upgrade' %}" class="btn-upgrade">⚡ Upgrade to Pro</a>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="btn-logout">🚪 Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}">🔑 Login</a>
+                <a href="{% url 'register' %}">📝 Register</a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
-        
-        {% if error %}
+
+        {% if limit_error %}
+            <div class="card border-0 shadow-sm mb-4" style="border-left: 5px solid #f59e0b !important; overflow: hidden;">
+                <div class="p-4 d-flex flex-wrap align-items-center gap-4">
+                    <div style="font-size: 2.5rem;">🚀</div>
+                    <div class="flex-grow-1" style="min-width: 260px;">
+                        <h5 class="fw-bold mb-1 text-dark">Free plan limit reached</h5>
+                        <p class="text-muted mb-2">{{ limit_error }}</p>
+                        <small class="text-muted">Pro unlocks <strong>up to 10,00,000 rows</strong> and <strong>50 MB files</strong>, one-time payment, no monthly fees.</small>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{% url 'upgrade' %}" class="btn btn-primary">⚡ Upgrade to Pro</a>
+                        <small class="text-muted text-center">Or split your file into parts of {{ free_row_limit }} rows</small>
+                    </div>
+                </div>
+            </div>
+        {% elif error %}
             <div class="alert alert-danger shadow-sm border-0 rounded-3 mb-4"><span class="fw-bold">Error:</span> {{ error }}</div>
         {% endif %}
 
         <!-- TAB 1: SINGLE EXCEL -->
         <div id="single" class="tab-section {% if active_tab == 'single' %}active{% endif %}">
-            
+
             <div class="card p-4 p-md-5">
                 <h3 class="fw-bold mb-2 text-dark" style="letter-spacing: -0.5px;">Single File Extractor</h3>
                 <p class="text-muted mb-4">Upload a dataset to automatically identify duplicates, missing values, and generate a sanitized list.</p>
-                
+
                 <form method="POST" enctype="multipart/form-data" class="process-form">
                     {% csrf_token %}
                     <input type="hidden" name="mode" value="single">
@@ -195,7 +191,7 @@
                             <input type="file" name="file_single" class="form-control bg-light" accept=".xlsx, .xls" required>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-4">
                         <div class="col-lg-8">
                             <label class="form-label">Key Columns to Check <span class="text-muted fw-normal">(Comma separated)</span></label>
@@ -234,26 +230,25 @@
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                         <button type="submit" class="btn btn-primary submit-btn px-4">Analyze Dataset</button>
                         {% if single_success %}
-                            <a href="{{ s_download_uri }}" download="Fresh_Clean_Data.xlsx" class="btn btn-success d-flex align-items-center gap-2">
+                            <a href="{{ s_download_uri }}" class="btn btn-success d-flex align-items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
                                 Download Clean Data
                             </a>
                         {% endif %}
-                        <!-- CHANGED TO RED RESET BUTTON -->
-                        <a href="" class="btn btn-outline-danger fw-semibold ms-auto">Reset</a>
+                        <a href="{% url 'app' %}" class="btn btn-outline-danger fw-semibold ms-auto">Reset</a>
                     </div>
                 </form>
             </div>
 
             {% if single_success %}
             <div class="alert bg-white border shadow-sm py-3 mb-4 d-flex align-items-center gap-3 rounded-4">
-                <span class="fs-4">⏱️</span> 
+                <span class="fs-4">⏱️</span>
                 <div>
-                    <strong class="text-dark">Processing Complete!</strong> 
+                    <strong class="text-dark">Processing Complete!</strong>
                     <span class="text-muted">Total time taken: <strong id="actual-time-single" class="text-primary">{{ s_execution_time }}</strong></span>
                 </div>
             </div>
-            
+
             <div class="card p-4 mb-4">
                 <div class="d-flex align-items-center flex-wrap gap-4">
                     <div class="text-center pe-4 border-end">
@@ -262,7 +257,7 @@
                     <div class="flex-grow-1 min-vw-50">
                         <h4 class="fw-bold mb-2">Overall Data Health</h4>
                         <div class="progress" style="height: 12px; border-radius: 10px; background: #f1f5f9;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ s_health_color }}" role="progressbar" style="width: {{ s_health_score }}%;" aria-valuenow="{{ s_health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div id="health-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-{{ s_health_color }}" role="progressbar" style="width: 0%;" data-health-score="{{ s_health_score }}" aria-valuenow="{{ s_health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                         <p class="text-muted mt-2 mb-0 small">Based on the percentage of valid, duplicate-free rows successfully recovered from the original file.</p>
                     </div>
@@ -277,14 +272,14 @@
                 <div class="col-md-4 col-sm-6"><div class="card stat-card stat-info text-center h-100"><h3>{{ s_invalid_phones }}</h3><p class="mb-0">Invalid Phones</p></div></div>
                 <div class="col-md-4 col-sm-6"><div class="card stat-card stat-secondary text-center h-100"><h3>{{ s_total_blanks }}</h3><p class="mb-0">Missing Cells Found</p></div></div>
             </div>
-            
+
             <div class="d-flex align-items-center mb-4 gap-2">
                 <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">Data Validation Reports</h4>
                 <span class="badge bg-light text-muted border">Top 100 Preview</span>
             </div>
-            
+
             <div class="accordion" id="dataPreviewAccordion">
-                
+
                 {% if s_duplicates_table %}
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingOne">
@@ -296,7 +291,7 @@
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Showing preview of top 100 rows.</span>
-                                <a href="{{ s_dup_uri }}" download="Removed_Duplicates.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-warning">⬇️ Download File</a>
+                                <a href="{{ s_dup_uri }}" class="btn btn-sm btn-white border fw-bold shadow-sm text-warning">⬇️ Download File</a>
                             </div>
                             <div class="table-responsive">{{ s_duplicates_table|safe }}</div>
                         </div>
@@ -315,14 +310,14 @@
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Showing preview of top 100 rows.</span>
-                                <a href="{{ s_blank_uri }}" download="Removed_Blank_Rows.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-danger">⬇️ Download File</a>
+                                <a href="{{ s_blank_uri }}" class="btn btn-sm btn-white border fw-bold shadow-sm text-danger">⬇️ Download File</a>
                             </div>
                             <div class="table-responsive">{{ s_blanks_table|safe }}</div>
                         </div>
                     </div>
                 </div>
                 {% endif %}
-                
+
                 {% if s_invalid_table %}
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingThree">
@@ -334,7 +329,7 @@
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Review and send back to the sourcing team.</span>
-                                <a href="{{ s_invalid_uri }}" download="Removed_Invalid_Phones.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-info">⬇️ Download File</a>
+                                <a href="{{ s_invalid_uri }}" class="btn btn-sm btn-white border fw-bold shadow-sm text-info">⬇️ Download File</a>
                             </div>
                             <div class="table-responsive">{{ s_invalid_table|safe }}</div>
                         </div>
@@ -353,7 +348,7 @@
                         <div class="accordion-body p-0">
                             <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">Showing preview of top 100 rows.</span>
-                                <a href="{{ s_empty_uri }}" download="Rows_With_Missing_Data.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-secondary">⬇️ Download File</a>
+                                <a href="{{ s_empty_uri }}" class="btn btn-sm btn-white border fw-bold shadow-sm text-secondary">⬇️ Download File</a>
                             </div>
                             <div class="table-responsive">{{ s_empty_cells_table|safe }}</div>
                         </div>
@@ -365,13 +360,12 @@
             {% endif %}
         </div>
 
-
         <!-- TAB 2: EXCEL COMPARE -->
         <div id="compare" class="tab-section {% if active_tab == 'compare' %}active{% endif %}">
             <div class="card p-4 p-md-5 mb-4">
                 <h3 class="fw-bold mb-2 text-dark" style="letter-spacing: -0.5px;">Compare Two Datasets</h3>
                 <p class="text-muted mb-4">Upload two separate files to instantly find matching rows based on your specified columns.</p>
-                
+
                 <form method="POST" enctype="multipart/form-data" class="process-form">
                     {% csrf_token %}
                     <input type="hidden" name="mode" value="compare">
@@ -387,7 +381,7 @@
                             <input type="file" name="file2" class="form-control bg-light" accept=".xlsx, .xls" required>
                         </div>
                     </div>
-                    
+
                     <div class="mb-5">
                         <label class="form-label">Match Columns <span class="text-muted fw-normal">(Comma separated)</span></label>
                         <input type="text" name="columns" class="form-control" value="Name, Phone, State">
@@ -398,22 +392,21 @@
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                         <button type="submit" class="btn btn-primary submit-btn px-4">Run Comparison</button>
                         {% if compare_success %}
-                            <a href="{{ c_download_uri }}" download="Comparison_Full_Report.xlsx" class="btn btn-success d-flex align-items-center gap-2">
+                            <a href="{{ c_download_uri }}" class="btn btn-success d-flex align-items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
                                 Download Full Report
                             </a>
                         {% endif %}
-                        <!-- CHANGED TO RED RESET BUTTON -->
-                        <a href="" class="btn btn-outline-danger fw-semibold ms-auto">Reset</a>
+                        <a href="{% url 'app' %}" class="btn btn-outline-danger fw-semibold ms-auto">Reset</a>
                     </div>
                 </form>
             </div>
 
             {% if compare_success %}
             <div class="alert bg-white border shadow-sm py-3 mb-4 d-flex align-items-center gap-3 rounded-4">
-                <span class="fs-4">⏱️</span> 
+                <span class="fs-4">⏱️</span>
                 <div>
-                    <strong class="text-dark">Processing Complete!</strong> 
+                    <strong class="text-dark">Processing Complete!</strong>
                     <span class="text-muted">Total time taken: <strong id="actual-time-compare" class="text-primary">{{ c_execution_time }}</strong></span>
                 </div>
             </div>
@@ -425,126 +418,103 @@
                 <div class="col-md-3 col-sm-6"><div class="card stat-card stat-secondary text-center h-100"><h3>{{ c_total_blanks }}</h3><p class="mb-0">Total Empty Cells</p></div></div>
             </div>
 
-                {% if c_duplicates_table %}
-                    <div class="card overflow-hidden">
-                        <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="text-success fw-bold mb-1">Matched Records Preview</h5>
-                                <p class="text-muted small mb-0">Showing top 100 rows found in both files.</p>
-                            </div>
-                            <a href="{{ c_dup_uri }}" download="Matched_Exact_Duplicates.xlsx" class="btn btn-sm btn-white border fw-bold shadow-sm text-success">⬇️ Download Records</a>
+            {% if c_duplicates_table %}
+                <div class="card overflow-hidden">
+                    <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-success fw-bold mb-1">Matched Records Preview</h5>
+                            <p class="text-muted small mb-0">Showing top 100 rows found in both files.</p>
                         </div>
-                        <div class="table-responsive m-0">{{ c_duplicates_table|safe }}</div>
+                        <a href="{{ c_dup_uri }}" class="btn btn-sm btn-white border fw-bold shadow-sm text-success">⬇️ Download Records</a>
                     </div>
-                {% endif %}
+                    <div class="table-responsive m-0">{{ c_duplicates_table|safe }}</div>
+                </div>
+            {% endif %}
             {% endif %}
         </div>
-        
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Tab switching logic
+        // Tab switching
         function switchTab(tabId) {
             document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             document.getElementById('nav-' + tabId).classList.add('active');
         }
 
-        // Logic to calculate exact real-world time
         document.addEventListener("DOMContentLoaded", function() {
+            // Real-world processing time
             let userStartTime = sessionStorage.getItem("real_process_start_time");
-            
             if (userStartTime) {
-                let endTime = Date.now();
-                let diffInSeconds = (endTime - parseInt(userStartTime)) / 1000;
-                
+                let diffInSeconds = (Date.now() - parseInt(userStartTime)) / 1000;
                 let mins = Math.floor(diffInSeconds / 60);
                 let secs = (diffInSeconds % 60).toFixed(2);
                 let exactTimeStr = mins + " min " + secs + " sec";
 
                 let singleTimeEl = document.getElementById("actual-time-single");
                 let compareTimeEl = document.getElementById("actual-time-compare");
-                
                 if (singleTimeEl) { singleTimeEl.innerText = exactTimeStr; }
                 if (compareTimeEl) { compareTimeEl.innerText = exactTimeStr; }
 
                 sessionStorage.removeItem("real_process_start_time");
             }
+
+            // Health bar animation
+            const healthBar = document.getElementById("health-bar");
+            if (healthBar) {
+                const score = healthBar.getAttribute("data-health-score");
+                setTimeout(() => { healthBar.style.width = score + "%"; }, 150);
+            }
         });
 
-        // --- ULTRA-SMOOTH, REALISTIC, NON-STOP PROGRESS LOGIC ---
+        // Loading progress simulation
         function startLoadingSimulation() {
             const progressBar = document.getElementById('dynamic-progress-bar');
             const statusText = document.getElementById('dynamic-loading-text');
-            
-            // Expanded Professional Messages
+
             const messages = [
-                "Initializing data processor...",
-                "Reading Excel rows and columns...",
-                "Parsing spreadsheet headers...",
-                "Extracting relevant columns...",
-                "Trimming hidden whitespaces...",
-                "Standardizing names and formats...",
-                "Normalizing text casing...",
-                "Scanning for exact duplicates...",
-                "Isolating duplicate records...",
-                "Cross-checking data structures...",
-                "Validating contact details...",
-                "Fixing invalid phone numbers...",
-                "Filtering out empty cells...",
-                "Removing blank rows...",
-                "Allocating system resources...",
-                "Optimizing memory usage...",
-                "Calculating data health score...",
-                "Compiling comparison reports...",
-                "Structuring HTML preview tables...",
-                "Analyzing final datasets...",
-                "Generating clean output files...",
+                "Initializing data processor...", "Reading Excel rows and columns...", "Parsing spreadsheet headers...",
+                "Extracting relevant columns...", "Trimming hidden whitespaces...", "Standardizing names and formats...",
+                "Normalizing text casing...", "Scanning for exact duplicates...", "Isolating duplicate records...",
+                "Cross-checking data structures...", "Validating contact details...", "Fixing invalid phone numbers...",
+                "Filtering out empty cells...", "Removing blank rows...", "Allocating system resources...",
+                "Optimizing memory usage...", "Calculating data health score...", "Compiling comparison reports...",
+                "Structuring HTML preview tables...", "Analyzing final datasets...", "Generating clean output files...",
                 "Finalizing data, please hold on... 🚀"
             ];
 
             let progress = 0;
             let messageIndex = 0;
 
-            // Update Progress Bar
-            const progressInterval = setInterval(() => {
-                if (progress < 30) {
-                    progress += Math.random() * 2 + 1; 
-                } else if (progress < 60) {
-                    progress += Math.random() * 1.5 + 0.5; 
-                } else if (progress < 85) {
-                    progress += Math.random() * 0.8 + 0.2; 
-                } else if (progress < 95) {
-                    progress += Math.random() * 0.3 + 0.1; 
-                } else if (progress < 99) {
-                    progress += Math.random() * 0.1 + 0.01; 
-                }
-                
-                if (progress >= 99.5) progress = 99; 
+            setInterval(() => {
+                if (progress < 30) { progress += Math.random() * 2 + 1; }
+                else if (progress < 60) { progress += Math.random() * 1.5 + 0.5; }
+                else if (progress < 85) { progress += Math.random() * 0.8 + 0.2; }
+                else if (progress < 95) { progress += Math.random() * 0.3 + 0.1; }
+                else if (progress < 99) { progress += Math.random() * 0.1 + 0.01; }
+                if (progress >= 99.5) progress = 99;
 
-                let currentVal = progress.toFixed(1); 
+                let currentVal = progress.toFixed(1);
                 progressBar.style.width = currentVal + "%";
                 progressBar.innerText = currentVal + "%";
                 progressBar.setAttribute('aria-valuenow', currentVal);
-            }, 1500); 
+            }, 1500);
 
-            // Loop text updates
-            const textInterval = setInterval(() => {
+            setInterval(() => {
                 statusText.innerText = messages[messageIndex % messages.length];
                 messageIndex++;
-            }, 10000); 
+            }, 10000);
         }
 
-        // Form Submit Event
+        // Form submit
         document.querySelectorAll('.process-form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 if (this.checkValidity()) {
                     sessionStorage.setItem("real_process_start_time", Date.now());
-
                     document.getElementById('loading-overlay').style.display = 'flex';
                     startLoadingSimulation();
 
