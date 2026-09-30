@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFlow Toolkit | Clean, Deduplicate & Compare Excel Data in Seconds</title>
+    <meta name="description" content="Remove duplicates, fix Indian phone numbers, delete blank rows and compare two Excel files online. Free for up to 1,000 rows.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-blue: #2563eb; --primary-hover: #1d4ed8;
+            --bg-soft: #f8fafc; --bg-dark: #0f172a;
+            --text-dark: #0f172a; --text-muted: #64748b; --border: #e2e8f0;
+            --green: #10b981; --red: #ef4444; --amber: #f59e0b;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; color: var(--text-dark); background: #fff; -webkit-font-smoothing: antialiased; }
+        section[id] { scroll-margin-top: 80px; }
+
+        /* NAVBAR */
+        .navbar { background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+        .navbar-brand { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px; }
+        .nav-link { font-weight: 500; color: var(--text-muted); transition: .2s; }
+        .nav-link:hover { color: var(--primary-blue); }
+
+        /* BUTTONS */
+        .btn-cp {
+            background: var(--primary-blue); color: #fff; font-weight: 600; padding: 12px 28px;
+            border-radius: 10px; border: none; transition: all .25s;
+            box-shadow: 0 4px 14px rgba(37,99,235,.35);
+        }
+        .btn-cp:hover { background: var(--primary-hover); color: #fff; transform: translateY(-2px); }
+        .btn-co {
+            color: var(--text-dark); font-weight: 600; padding: 12px 28px; border-radius: 10px;
+            border: 1px solid var(--border); background: #fff; transition: all .25s;
+        }
+        .btn-co:hover { border-color: var(--text-dark); background: var(--bg-soft); color: var(--text-dark); }
+
+        /* HERO */
+        .hero {
+            padding: 130px 0 70px; text-align: center;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(37,99,235,.10), transparent 40%),
+                radial-gradient(circle at 80% 0%, rgba(6,182,212,.10), transparent 40%),
+                linear-gradient(180deg, var(--bg-soft) 0%, #fff 100%);
+        }
+        .hero-pill {
+            display: inline-block; background: #eff6ff; color: var(--primary-blue); border: 1px solid #bfdbfe;
+            font-weight: 600; font-size: .85rem; padding: 7px 16px; border-radius: 100px; margin-bottom: 22px;
+        }
+        .hero h1 { font-size: 3.6rem; font-weight: 800; line-height: 1.1; letter-spacing: -1.8px; margin-bottom: 22px; }
+        .grad { background: linear-gradient(90deg, #2563eb, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p.sub { font-size: 1.2rem; color: var(--text-muted); max-width: 640px; margin: 0 auto 34px; }
+        .hero-note { color: var(--text-muted); font-size: .85rem; margin-top: 16px; }
+
+        /* HERO MOCKUP */
+        .mock {
+            background: #fff; border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+            box-shadow: 0 30px 60px -20px rgba(15,23,42,.25); text-align: left;
+        }
+        .mock-bar { background: #f1f5f9; padding: 12px 16px; display: flex; gap: 7px; align-items: center; border-bottom: 1px solid var(--border); }
+        .mock-bar i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+        .mock-body { padding: 26px; }
+        .mock-col h6 { font-weight: 700; font-size: .8rem; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px; }
+        .mock table { width: 100%; font-size: .85rem; border-collapse: collapse; }
+        .mock th { background: #f8fafc; color: var(--text-muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; padding: 8px 10px; text-align: left; }
+        .mock td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
+        .mock tr.bad td { background: #fef2f2; color: #991b1b; }
+        .mock tr.dup td { background: #fffbeb; color: #92400e; }
+        .mock tr.ok td { background: #ecfdf5; color: #065f46; }
+        .arrow-mid { display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--primary-blue); }
+        .score-chip { display: inline-flex; align-items: center; gap: 8px; background: #ecfdf5; color: #065f46; font-weight: 700; padding: 8px 16px; border-radius: 100px; font-size: .9rem; }
+
+        /* STATS */
+        .stats { padding: 30px 0 10px; }
+        .stat h3 { font-weight: 800; letter-spacing: -1px; color: var(--primary-blue); margin-bottom: 2px; }
+        .stat p { color: var(--text-muted); font-size: .9rem; margin: 0; }
+
+        /* SECTION HEADINGS */
+        .sec { padding: 90px 0; }
+        .sec-soft { background: var(--bg-soft); }
+        .eyebrow { color: var(--primary-blue); font-weight: 700; font-size: .8rem; text-transform: uppercase; letter-spacing: 1.2px; }
+        .sec-title { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; margin: 10px 0 12px; }
+        .sec-sub { color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+
+        /* STEPS */
+        .step { text-align: center; padding: 10px 20px; }
+        .step-num {
+            width: 56px; height: 56px; border-radius: 50%; background: var(--primary-blue); color: #fff;
+            font-weight: 700; font-size: 1.3rem; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px; box-shadow: 0 8px 16px rgba(37,99,235,.3);
+        }
+
+        /* FEATURE CARDS */
+        .fcard { padding: 30px; border-radius: 16px; border: 1px solid var(--border); background: #fff; height: 100%; transition: .3s; }
+        .fcard:hover { box-shadow: 0 20px 25px -5px rgba(0,0,0,.06); transform: translateY(-5px); border-color: #bfdbfe; }
+        .ficon { width: 50px; height: 50px; border-radius: 12px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 18px; }
+        .fcard h5 { font-weight: 700; margin-bottom: 8px; }
+        .fcard p { color: var(--text-muted); margin: 0; font-size: .95rem; }
+
+        /* USE CASES */
+        .usecase { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 14px; background: #fff; border: 1px solid var(--border); height: 100%; }
+        .usecase .ui { font-size: 1.5rem; }
+        .usecase h6 { font-weight: 700; margin-bottom: 2px; }
+        .usecase span { color: var(--text-muted); font-size: .88rem; }
+
+        /* PRICING */
+        .pcard { border: 1px solid var(--border); border-radius: 20px; padding: 38px; background: #fff; position: relative; height: 100%; }
+        .pcard.pro { border: 2px solid var(--primary-blue); box-shadow: 0 25px 40px -12px rgba(37,99,235,.2); }
+        .pbadge { position: absolute; top: -13px; right: 28px; background: linear-gradient(90deg,#2563eb,#3b82f6); color: #fff; font-size: .72rem; font-weight: 700; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: .5px; }
+        .price { font-size: 3rem; font-weight: 800; letter-spacing: -1.5px; margin: 14px 0; }
+        .price span { font-size: 1rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
+        .plist { list-style: none; padding: 0; margin: 24px 0 28px; }
+        .plist li { margin-bottom: 12px; color: #475569; display: flex; gap: 10px; align-items: flex-start; font-size: .95rem; }
+        .plist li .y { color: var(--green); font-weight: 800; }
+        .plist li .n { color: #cbd5e1; font-weight: 800; }
+        .plist li.off { color: #94a3b8; }
+
+        /* FAQ */
+        .accordion-item { border: 1px solid var(--border); border-radius: 12px !important; margin-bottom: 12px; overflow: hidden; }
+        .accordion-button { font-weight: 600; padding: 1.15rem 1.4rem; }
+        .accordion-button:not(.collapsed) { background: #f8fafc; color: var(--primary-blue); box-shadow: none; }
+        .accordion-button:focus { box-shadow: none; }
+        .accordion-body { color: var(--text-muted); }
+
+        /* CTA */
+        .cta { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%); padding: 80px 0; }
+
+        /* FOOTER */
+        footer { background: var(--bg-dark); color: #94a3b8; padding: 60px 0 30px; font-size: .9rem; }
+        footer h6 { color: #f1f5f9; font-weight: 600; margin-bottom: 14px; }
+        footer a { color: #94a3b8; text-decoration: none; display: block; margin-bottom: 8px; transition: .2s; }
+        footer a:hover { color: #fff; }
+        .footer-bottom { border-top: 1px solid #1e293b; margin-top: 36px; padding-top: 22px; }
+
+        @media (max-width: 768px) {
+            .hero { padding-top: 110px; }
+            .hero h1 { font-size: 2.3rem; letter-spacing: -1px; }
+            .sec-title { font-size: 1.8rem; }
+            .arrow-mid { transform: rotate(90deg); padding: 6px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg fixed-top py-3">
+    <div class="container">
+        <a class="navbar-brand text-dark" href="{% url 'home' %}">⚡ DataFlow</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+                <li class="nav-item"><a class="nav-link" href="#how">How it works</a></li>
+                <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link" href="#pricing">Pricing</a></li>
+                <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'login' %}">Log In</a></li>
+                <li class="nav-item"><a class="btn btn-cp" style="padding:8px 20px;" href="{% url 'app' %}">Try for Free</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <span class="hero-pill">🚀 Built for sales, marketing &amp; data teams</span>
+                <h1>Clean, Deduplicate &amp; Compare<br>Excel Data in <span class="grad">Seconds.</span></h1>
+                <p class="sub">Remove duplicates, fix Indian phone numbers, delete blank rows and match two files automatically. No formulas, no macros, no manual work.</p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{% url 'app' %}" class="btn btn-cp btn-lg">Start Cleaning for Free</a>
+                    <a href="#how" class="btn btn-co btn-lg">See How It Works</a>
+                </div>
+                <p class="hero-note">Free up to 1,000 rows &nbsp;•&nbsp; No credit card &nbsp;•&nbsp; Files auto-deleted in 24 hours</p>
+            </div>
+        </div>
+
+        <!-- Before / After mockup -->
+        <div class="row justify-content-center mt-5 pt-3">
+            <div class="col-lg-11">
+                <div class="mock">
+                    <div class="mock-bar">
+                        <i style="background:#ef4444"></i><i style="background:#f59e0b"></i><i style="background:#10b981"></i>
+                        <span class="ms-3 small text-muted">DataFlow Toolkit · Single File Extractor</span>
+                    </div>
+                    <div class="mock-body">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-5 mock-col">
+                                <h6 class="text-danger">❌ Before: messy data</h6>
+                                <table>
+                                    <tr><th>Name</th><th>Phone</th><th>State</th></tr>
+                                    <tr class="ok"><td>rahul sharma</td><td>+91 98765 43210</td><td>delhi</td></tr>
+                                    <tr class="dup"><td>Rahul Sharma</td><td>9876543210</td><td>Delhi</td></tr>
+                                    <tr class="bad"><td>Priya Singh</td><td>98765</td><td>Punjab</td></tr>
+                                    <tr class="bad"><td>Amit Verma</td><td></td><td>UP</td></tr>
+                                    <tr class="ok"><td>neha gupta</td><td>09123456780</td><td>bihar</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-2 arrow-mid">➜</div>
+                            <div class="col-md-5 mock-col">
+                                <h6 class="text-success">✅ After: fresh clean data</h6>
+                                <table>
+                                    <tr><th>Name</th><th>Phone</th><th>State</th></tr>
+                                    <tr class="ok"><td>Rahul Sharma</td><td>9876543210</td><td>Delhi</td></tr>
+                                    <tr class="ok"><td>Neha Gupta</td><td>9123456780</td><td>Bihar</td></tr>
+                                </table>
+                                <div class="mt-3 d-flex flex-wrap gap-2">
+                                    <span class="score-chip">✔ Data Health 40%</span>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis align-self-center">1 duplicate</span>
+                                    <span class="badge bg-danger-subtle text-danger-emphasis align-self-center">2 invalid / blank</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3">Sample illustration of how your data is cleaned.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3 stat"><h3>1,000</h3><p>Rows free, forever</p></div>
+            <div class="col-6 col-md-3 stat"><h3>10 Lakh</h3><p>Rows on Pro plan</p></div>
+            <div class="col-6 col-md-3 stat"><h3>24 hrs</h3><p>Auto-delete of your files</p></div>
+            <div class="col-6 col-md-3 stat"><h3>0</h3><p>Formulas or macros needed</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="sec">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="eyebrow">How it works</div>
+            <h2 class="sec-title">From messy sheet to clean list in 3 steps</h2>
+            <p class="sec-sub">No learning curve. If you can upload a file, you can use DataFlow.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4"><div class="step"><div class="step-num">1</div><h5 class="fw-bold">Upload your Excel</h5><p class="text-muted">Drop your .xlsx or .xls file and type the key columns to check, like <em>Name, Phone, State</em>.</p></div></div>
+            <div class="col-md-4"><div class="step"><div class="step-num">2</div><h5 class="fw-bold">Choose cleaning rules</h5><p class="text-muted">Turn on auto-standardize, duplicate removal, blank row removal and invalid phone removal.</p></div></div>
+            <div class="col-md-4"><div class="step"><div class="step-num">3</div><h5 class="fw-bold">Download clean data</h5><p class="text-muted">Get your Fresh Clean file plus separate reports for every removed row, with original Excel row numbers.</p></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="sec sec-soft">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="eyebrow">Features</div>
+            <h2 class="sec-title">Everything you need for clean data</h2>
+            <p class="sec-sub">Powerful automation built specifically for lead lists, customer databases and contact sheets.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4"><div class="fcard"><div class="ficon">🧹</div><h5>Smart Auto-Fix</h5><p>Converts names, states and cities to Title Case, and cleans <strong>+91</strong>, <strong>0</strong> prefixes, spaces and dashes from phone numbers.</p></div></div>
+            <div class="col-md-6 col-lg-4"><div class="fcard"><div class="ficon">⚠️</div><h5>Deduplication Engine</h5><p>Finds exact duplicates across your key columns, keeps the first entry and moves the rest into a separate report.</p></div></div>
+            <div class="col-md-6 col-lg-4"><div class="fcard"><div class="ficon">📱</div><h5>Phone Validation</h5><p>Detects numbers that are not 10 digits and separates them, so you can send them back to your sourcing team.</p></div></div>
+            <div class="col-md-6 col-lg-4"><div class="fcard"><div class="ficon">📊</div><h5>Cross-File Comparison</h5><p>Upload two sheets and instantly find matching records between them. Ideal for checking new leads against old ones.</p></div></div>
+            <div class="col-md-6 col-lg-4"><div class="fcard"><div class="ficon">❤️</div><h5>Data Health Score</h5><p>See a clear percentage score showing how much of your file was clean, plus counts of blanks, duplicates and invalid rows.</p></div></div>
+            <div class="col-md-6 col-lg-4"><div class="fcard"><div class="ficon">🔒</div><h5>Private &amp; Secure</h5><p>Processed files are stored only for you and are automatically deleted after 24 hours.</p></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- USE CASES -->
+<section class="sec">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="eyebrow">Use cases</div>
+            <h2 class="sec-title">Made for people who work with lists</h2>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-3"><div class="usecase"><div class="ui">📞</div><div><h6>Tele-calling teams</h6><span>Stop calling the same lead twice.</span></div></div></div>
+            <div class="col-md-6 col-lg-3"><div class="usecase"><div class="ui">📧</div><div><h6>Marketing agencies</h6><span>Clean lists before every campaign.</span></div></div></div>
+            <div class="col-md-6 col-lg-3"><div class="usecase"><div class="ui">🏢</div><div><h6>Sales &amp; CRM teams</h6><span>Match new leads with existing customers.</span></div></div></div>
+            <div class="col-md-6 col-lg-3"><div class="usecase"><div class="ui">🎓</div><div><h6>Institutes &amp; events</h6><span>Merge registration lists without repeats.</span></div></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="sec sec-soft">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="eyebrow">Pricing</div>
+            <h2 class="sec-title">Simple, transparent pricing</h2>
+            <p class="sec-sub">Start free. Upgrade once for lifetime access. No monthly subscription.</p>
+        </div>
+        <div class="row justify-content-center g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="pcard">
+                    <h4 class="fw-bold">Basic Free</h4>
+                    <p class="text-muted mb-0">Perfect for quick, small tasks.</p>
+                    <div class="price">₹0 <span>/ forever</span></div>
+                    <ul class="plist">
+                        <li><span class="y">✓</span> Up to 1,000 rows per file</li>
+                        <li><span class="y">✓</span> Files up to 5 MB</li>
+                        <li><span class="y">✓</span> Duplicate &amp; blank removal</li>
+                        <li><span class="y">✓</span> Phone number fixing</li>
+                        <li><span class="y">✓</span> Cross-file comparison</li>
+                        <li class="off"><span class="n">✗</span> Priority support</li>
+                    </ul>
+                    <a href="{% url 'app' %}" class="btn btn-co w-100">Start Free</a>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="pcard pro">
+                    <div class="pbadge">Lifetime Deal</div>
+                    <h4 class="fw-bold text-primary">Pro Lifetime</h4>
+                    <p class="text-muted mb-0">For professionals and agencies.</p>
+                    <div class="price">₹1,999 <span>/ one-time</span></div>
+                    <ul class="plist">
+                        <li><span class="y">✓</span> <strong>Up to 10,00,000 rows</strong> per file</li>
+                        <li><span class="y">✓</span> Files up to 100 MB</li>
+                        <li><span class="y">✓</span> Everything in Free</li>
+                        <li><span class="y">✓</span> Priority email support</li>
+                        <li><span class="y">✓</span> All future updates included</li>
+                        <li><span class="y">✓</span> No monthly fees, ever</li>
+                    </ul>
+                    <a href="{% url 'register' %}" class="btn btn-cp w-100">Get Lifetime Access</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="sec">
+    <div class="container" style="max-width: 800px;">
+        <div class="text-center mb-5">
+            <div class="eyebrow">FAQ</div>
+            <h2 class="sec-title">Frequently asked questions</h2>
+        </div>
+        <div class="accordion" id="faqAcc">
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#f1">Is my data safe?</button></h2>
+                <div id="f1" class="accordion-collapse collapse show" data-bs-parent="#faqAcc"><div class="accordion-body">Your files are processed only for your session and the results are automatically deleted from our server after 24 hours. We never sell or share your data.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">Which file formats are supported?</button></h2>
+                <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body">Currently .xlsx and .xls Excel files. Your first row should contain the column headings.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">What does Auto-Standardize do?</button></h2>
+                <div id="f3" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body">It converts Name, State and City columns to Title Case, and removes spaces, dashes, "+91" and leading "0" from Indian phone numbers so that duplicates are detected accurately.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f4">Do I need an account to try it?</button></h2>
+                <div id="f4" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body">No. You can try the free version (up to 1,000 rows) right away. Create an account to track your usage and upgrade to Pro anytime.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f5">How does the Pro Lifetime plan work?</button></h2>
+                <div id="f5" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body">Pay ₹1,999 once and unlock higher limits (up to 10,00,000 rows and 100 MB files) plus all future updates. There are no monthly charges.</div></div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f6">I found a problem. Who do I contact?</button></h2>
+                <div id="f6" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body">Write to us at <strong>support@yourdomain.com</strong> and we will get back to you quickly.</div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <div class="container text-center">
+        <h2 class="fw-bold text-white mb-3" style="font-size:2.4rem; letter-spacing:-1px;">Ready to clean your messy data?</h2>
+        <p class="text-white-50 mb-4 fs-5">Upload your first file and see the results in seconds.</p>
+        <a href="{% url 'app' %}" class="btn btn-light btn-lg fw-bold text-primary px-5 rounded-3 shadow">Try The Tool Now</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <h5 class="text-white fw-bold mb-3">⚡ DataFlow Toolkit</h5>
+                <p style="max-width:340px;">Clean, deduplicate and compare Excel data in seconds. Built for productivity.</p>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6>Product</h6>
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6>Account</h6>
+                <a href="{% url 'login' %}">Log In</a>
+                <a href="{% url 'register' %}">Sign Up</a>
+                <a href="{% url 'app' %}">Open Tool</a>
+            </div>
+            <div class="col-lg-3">
+                <h6>Legal &amp; Support</h6>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Refund Policy</a>
+                <a href="mailto:support@yourdomain.com">Contact Us</a>
+            </div>
+        </div>
+        <div class="footer-bottom d-flex flex-wrap justify-content-between gap-2">
+            <span>© 2026 DataFlow Toolkit. All rights reserved.</span>
+            <span>Made in India 🇮🇳</span>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

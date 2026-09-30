@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Account | DataFlow Toolkit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f8fafc; --bg-dark: #0f172a; --primary-blue: #2563eb;
+            --primary-hover: #1d4ed8; --success-green: #10b981;
+            --text-main: #334155; --text-muted: #64748b; --border-color: #e2e8f0;
+        }
+        body { font-family: 'Inter', sans-serif; color: var(--text-main); background: var(--bg-body); -webkit-font-smoothing: antialiased; }
+        .auth-wrapper { min-height: 100vh; display: flex; }
+
+        /* Left brand panel */
+        .brand-panel {
+            flex: 1; background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+            color: #fff; padding: 60px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .brand-panel .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 40px; }
+        .brand-panel h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -1px; line-height: 1.25; margin-bottom: 16px; }
+        .brand-panel p.lead { color: #94a3b8; font-size: 1.05rem; margin-bottom: 36px; }
+        .feature { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 22px; }
+        .feature .icon {
+            width: 40px; height: 40px; border-radius: 10px; background: rgba(37,99,235,0.2);
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .feature h6 { margin: 0 0 2px; font-weight: 600; color: #f1f5f9; }
+        .feature span { color: #94a3b8; font-size: 0.9rem; }
+
+        /* Right form panel */
+        .form-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+        .auth-card {
+            width: 100%; max-width: 440px; background: #fff; border-radius: 16px; padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03);
+        }
+        .auth-card h3 { font-weight: 700; letter-spacing: -0.5px; color: #0f172a; }
+        .form-label { font-weight: 600; color: #475569; font-size: 0.9rem; margin-bottom: 0.4rem; }
+        .form-control {
+            border-radius: 10px; padding: 0.75rem 1.1rem; border: 1px solid var(--border-color);
+            font-size: 0.95rem; box-shadow: none; transition: all 0.2s;
+        }
+        .form-control:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+        .form-control.is-invalid { border-color: #ef4444; background-image: none; }
+        .field-error { color: #ef4444; font-size: 0.82rem; margin-top: 4px; }
+        .btn-primary {
+            background: var(--primary-blue); border: none; border-radius: 10px; padding: 0.75rem;
+            font-weight: 600; letter-spacing: 0.3px; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.3); transition: all 0.2s;
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .pw-wrap { position: relative; }
+        .pw-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; user-select: none;
+        }
+        .hint { color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; }
+        .auth-card a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+        .auth-card a:hover { text-decoration: underline; }
+
+        @media (max-width: 900px) {
+            .brand-panel { display: none; }
+            .form-panel { background: var(--bg-dark); }
+        }
+    </style>
+</head>
+<body>
+<div class="auth-wrapper">
+
+    <!-- LEFT: BRAND -->
+    <div class="brand-panel">
+        <div class="logo">⚡ DataFlow Toolkit</div>
+        <h1>Clean your Excel data<br>in seconds, not hours.</h1>
+        <p class="lead">Remove duplicates, fix phone numbers and compare files automatically.</p>
+
+        <div class="feature">
+            <div class="icon">🧹</div>
+            <div><h6>Smart Data Cleaning</h6><span>Duplicates, blanks and invalid phones handled in one click.</span></div>
+        </div>
+        <div class="feature">
+            <div class="icon">📊</div>
+            <div><h6>Compare Two Files</h6><span>Instantly find matching records across datasets.</span></div>
+        </div>
+        <div class="feature">
+            <div class="icon">🔒</div>
+            <div><h6>Private &amp; Secure</h6><span>Your files are auto-deleted after 24 hours.</span></div>
+        </div>
+    </div>
+
+    <!-- RIGHT: FORM -->
+    <div class="form-panel">
+        <div class="auth-card">
+            <h3 class="mb-1">Create your account</h3>
+            <p class="text-muted mb-4">Start cleaning data for free. No card required.</p>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger border-0 rounded-3 py-2 small">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+                    {{ form.username }}
+                    {% for e in form.username.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+                    {{ form.email }}
+                    {% for e in form.email.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
+                    <div class="pw-wrap">
+                        {{ form.password1 }}
+                        <span class="pw-toggle" onclick="togglePw(this)">SHOW</span>
+                    </div>
+                    <div class="hint">At least 8 characters, not too common, not only numbers.</div>
+                    {% for e in form.password1.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    <div class="pw-wrap">
+                        {{ form.password2 }}
+                        <span class="pw-toggle" onclick="togglePw(this)">SHOW</span>
+                    </div>
+                    {% for e in form.password2.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Create Account</button>
+            </form>
+
+            <p class="text-center text-muted small mt-4 mb-0">
+                Already have an account? <a href="{% url 'login' %}">Sign in</a>
+            </p>
+            <p class="text-center mt-2 mb-0"><a href="{% url 'home' %}" class="small fw-normal text-muted">← Back to home</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePw(el) {
+        const input = el.parentElement.querySelector('input');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        el.innerText = show ? 'HIDE' : 'SHOW';
+    }
+    // errors wale fields red border
+    document.querySelectorAll('.field-error').forEach(err => {
+        const input = err.parentElement.querySelector('input');
+        if (input) input.classList.add('is-invalid');
+    });
+</script>
+</body>
+</html>
