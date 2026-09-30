@@ -161,7 +161,7 @@
                     <div class="flex-grow-1" style="min-width: 260px;">
                         <h5 class="fw-bold mb-1 text-dark">Free plan limit reached</h5>
                         <p class="text-muted mb-2">{{ limit_error }}</p>
-                        <small class="text-muted">Pro unlocks <strong>up to 10,00,000 rows</strong> and <strong>50 MB files</strong>, one-time payment, no monthly fees.</small>
+                        <small class="text-muted">Pro unlocks <strong>up to 10,48,575 rows (full Excel limit)</strong> and <strong>50 MB files</strong>, one-time payment, no monthly fees.</small>
                     </div>
                     <div class="d-flex flex-column gap-2">
                         <a href="{% url 'upgrade' %}" class="btn btn-primary">⚡ Upgrade to Pro</a>
@@ -188,7 +188,7 @@
                     <div class="row mb-4">
                         <div class="col-lg-8">
                             <label class="form-label">Upload Dirty Dataset (Excel)</label>
-                            <input type="file" name="file_single" class="form-control bg-light" accept=".xlsx, .xls" required>
+                            <input type="file" name="file_single" class="form-control bg-light" accept=".xlsx, .xls, .csv" required>
                         </div>
                     </div>
 
@@ -374,11 +374,11 @@
                     <div class="row mb-4 g-4">
                         <div class="col-md-6">
                             <label class="form-label">Source File 1</label>
-                            <input type="file" name="file1" class="form-control bg-light" accept=".xlsx, .xls" required>
+                            <input type="file" name="file1" class="form-control bg-light" accept=".xlsx, .xls, .csv" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Target File 2</label>
-                            <input type="file" name="file2" class="form-control bg-light" accept=".xlsx, .xls" required>
+                            <input type="file" name="file2" class="form-control bg-light" accept=".xlsx, .xls, .csv" required>
                         </div>
                     </div>
 

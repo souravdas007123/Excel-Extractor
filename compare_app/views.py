@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 # CONFIG
 # ==========================================
 FREE_ROW_LIMIT = 1000
-PRO_ROW_LIMIT = 1000000
+PRO_ROW_LIMIT = 1048575 
 FREE_MAX_FILE_MB = 5
-PRO_MAX_FILE_MB = 100
-ALLOWED_EXTENSIONS = ('.xlsx', '.xls')
+PRO_MAX_FILE_MB = 150
+AALLOWED_EXTENSIONS = ('.xlsx', '.xls', '.csv')
 RESULT_MAX_AGE_SECONDS = 24 * 60 * 60  # results 24 ghante baad delete
 
 RESULT_DIR = Path(settings.BASE_DIR) / 'processed_files'
@@ -54,8 +54,8 @@ def get_user_plan(user):
 
 def validate_upload(file_obj, is_pro):
     name = file_obj.name.lower()
-    if not name.endswith(ALLOWED_EXTENSIONS):
-        raise ValueError("Only .xlsx or .xls files are allowed.")
+    if not name.endswith(AALLOWED_EXTENSIONS):
+        raise ValueError("Only .xlsx, .xls or .csv files are allowed.")
     max_mb = PRO_MAX_FILE_MB if is_pro else FREE_MAX_FILE_MB
     if file_obj.size > max_mb * 1024 * 1024:
         msg = f"File too large. {'Pro' if is_pro else 'Free'} plan supports files up to {max_mb} MB."
@@ -87,6 +87,44 @@ def parse_columns(columns_input):
         raise ValueError("Please enter at least one column name.")
     # duplicate names hatao, order same rakho
     return list(dict.fromkeys(cols))
+
+def read_table(file_obj, columns=None):
+    """Excel (.xlsx/.xls) ya CSV padhta hai. columns diye to sirf wahi columns lauta hai."""
+    name = file_obj.name.lower()
+
+    if not name.endswith('.csv'):
+        if columns:
+            return pd.read_excel(file_obj, engine='calamine', usecols=columns)
+        return pd.read_excel(file_obj, engine='calamine')
+
+    # ---- CSV ----
+    head = file_obj.read(4096)
+    file_obj.seek(0)
+    first_line = head.decode('utf-8', errors='ignore').splitlines()[0] if head else ''
+    sep = max([',', ';', '\t', '|'], key=first_line.count)
+
+    df = None
+    for enc in ('utf-8-sig', 'cp1252', 'latin-1'):
+        try:
+            file_obj.seek(0)
+            df = pd.read_csv(file_obj, dtype=str, sep=sep, encoding=enc)
+            break
+        except UnicodeDecodeError:
+            continue
+        except pd.errors.EmptyDataError:
+            raise ValueError("The uploaded CSV file is empty.")
+        except pd.errors.ParserError:
+            raise ValueError("Could not read this CSV. Please check that it is a valid CSV file.")
+    if df is None:
+        raise ValueError("Could not read this CSV file (unsupported encoding).")
+
+    df.columns = df.columns.astype(str).str.strip()
+    if columns:
+        missing = [c for c in columns if c not in df.columns]
+        if missing:
+            raise ValueError(f"Columns not found: {missing}. Available columns: {list(df.columns)}")
+        df = df[columns]
+    return df
 
 
 def find_phone_col(columns):
@@ -257,7 +295,7 @@ def excel_dashboard(request):
 
                 start_time = time.perf_counter()
 
-                df = pd.read_excel(file_single, engine='calamine')
+                df = read_table(file_single)
                 df.columns = df.columns.astype(str).str.strip()
                 df = df.dropna(how='all') 
                 total_rows = len(df)  
@@ -394,15 +432,23 @@ def excel_dashboard(request):
                 start_time = time.perf_counter()
 
                 try:
-                    df1 = pd.read_excel(file1, engine='calamine', usecols=columns_to_check)
-                    df2 = pd.read_excel(file2, engine='calamine', usecols=columns_to_check)
-                except ValueError:
+                    df1 = read_table(file1, columns_to_check)
+                    df2 = read_table(file2, columns_to_check)
+                except ValueError as e:
+                    msg = str(e)
+                    if 'Columns not found' in msg or 'CSV' in msg or 'encoding' in msg:
+                        raise
                     raise ValueError(
                         f"One or both files do not contain all these columns: {columns_to_check}"
                     )
                 df1 = df1.dropna(how='all')        # NAYI LINE
                 df2 = df2.dropna(how='all')        # NAYI LINE
                 check_row_limit(max(len(df1), len(df2)), is_pro, request)
+
+                if is_pro and (len(df1) + len(df2)) > 2000000:
+                    raise ValueError(
+                        f"Combined rows ({len(df1) + len(df2):,}) exceed the compare limit of 20,00,000 rows."
+                    )
                 if len(df1) == 0 or len(df2) == 0:
                     raise ValueError("One of the uploaded files has no data rows.")
 
