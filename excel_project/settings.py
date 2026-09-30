@@ -126,7 +126,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Upload limits (Pro user 50MB tak)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 110 * 1024 * 1024 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 160 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # isse bade file temp disk par jayenge
 
 # Auth redirects
