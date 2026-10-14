@@ -12,22 +12,29 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-only-change-me')
+# ---- Core settings (environment variables; sensible defaults for local use) ----
+# Local: nothing to set. Production: set DJANGO_SECRET_KEY, DJANGO_DEBUG=0 and DJANGO_ALLOWED_HOSTS.
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-kc!-e7#yo2m40#=e#c%as%22p$i6br99%dp8@)xyla@xjwsahx'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-only-insecure-key-change-me')
+if not DEBUG and SECRET_KEY == 'dev-only-insecure-key-change-me':
+    raise ImproperlyConfigured(
+        "Set the DJANGO_SECRET_KEY environment variable when DJANGO_DEBUG=0."
+    )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if h.strip()
+]
 
-ALLOWED_HOSTS = ['*']
+# Contact details shown on landing / upgrade pages (override with environment variables)
+SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', 'support@socialflylive.com')
+WHATSAPP_NUMBER = os.environ.get('WHATSAPP_NUMBER', '')  # e.g. 919876543210 (no +); empty hides the button
 
 
 # Application definition
@@ -107,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -124,7 +131,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Upload limits (Pro user 50MB tak)
+# Background processing: files are processed in a background thread, status is kept in small files
+# under processed_files/jobs (no Redis/Celery needed). Max files processed at the same time per server process:
+MAX_CONCURRENT_JOBS = int(os.environ.get('MAX_CONCURRENT_JOBS', '2'))
+JOBS_RUN_INLINE = False   # tests switch this on so jobs run inside the request
+
+# Upload limits (Pro plan allows files up to 150 MB; enforced in views.validate_upload)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 160 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # isse bade file temp disk par jayenge
 

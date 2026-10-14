@@ -4,27 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Upgrade to Pro | DataFlow Toolkit</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% include 'compare_app/_theme.html' %}
     <style>
-        body { font-family:'Inter',sans-serif; background:#f8fafc; color:#334155; -webkit-font-smoothing:antialiased; }
-        .wrap { max-width: 900px; margin: 0 auto; padding: 50px 20px; }
-        .card-x { background:#fff; border-radius:20px; padding:36px; height:100%; border:1px solid #e2e8f0; }
-        .card-x.pro { border:2px solid #2563eb; box-shadow:0 25px 40px -12px rgba(37,99,235,.2); }
-        .price { font-size:2.8rem; font-weight:800; letter-spacing:-1.5px; color:#0f172a; }
-        .price small { font-size:1rem; font-weight:500; color:#64748b; letter-spacing:0; }
-        ul.pl { list-style:none; padding:0; margin:22px 0; }
-        ul.pl li { margin-bottom:11px; display:flex; gap:10px; }
-        ul.pl .y { color:#10b981; font-weight:800; }
-        .btn-p { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:.75rem; font-weight:600; }
-        .btn-p:hover { background:#1d4ed8; color:#fff; }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+        .card-x { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 24px; height: 100%; }
+        .card-x.pro { border: 2px solid var(--brand); }
+        .price { font-size: 2.2rem; font-weight: 800; color: var(--ink); }
+        .price small { font-size: .9rem; font-weight: 500; color: var(--muted); }
+        ul.pl { list-style: none; padding: 0; margin: 18px 0; }
+        ul.pl li { margin-bottom: 9px; display: flex; gap: 10px; }
+        ul.pl .y { color: var(--ok); font-weight: 800; }
+        .btn-p { background: var(--brand); color: #fff; border: none; border-radius: 6px; padding: .6rem; font-weight: 600; }
+        .btn-p:hover { background: var(--brand-hover); color: #fff; }
     </style>
 </head>
 <body>
 <div class="wrap">
     <a href="{% url 'app' %}" class="text-decoration-none small text-muted">← Back to tool</a>
     <div class="text-center my-4">
-        <h1 class="fw-bold" style="letter-spacing:-1px; color:#0f172a;">Upgrade to Pro</h1>
+        <h1 class="fw-bold" style="color:var(--ink);">Upgrade to Pro</h1>
         <p class="text-muted">Bigger files, one-time payment, no monthly fees.</p>
     </div>
 
@@ -50,7 +49,7 @@
                 <h5 class="fw-bold text-primary">Pro Lifetime</h5>
                 <div class="price">₹1,999 <small>/ one-time</small></div>
                 <ul class="pl">
-                    <li><span class="y">✓</span> <strong>10,48,575</strong> rows per file</li>
+                    <li><span class="y">✓</span> <span><strong>10,48,575</strong> rows per file</span></li>
                     <li><span class="y">✓</span> Files up to {{ pro_max_mb }} MB</li>
                     <li><span class="y">✓</span> Everything in Free</li>
                     <li><span class="y">✓</span> Priority email support</li>
@@ -59,15 +58,19 @@
 
                 {% if not is_pro %}
                     {% if user.is_authenticated %}
-                        <!-- Razorpay aane tak: contact to upgrade -->
-                        <a class="btn btn-p w-100 mb-2" target="_blank"
-                           href="https://wa.me/{{ whatsapp_number }}?text=Hi, I want to upgrade to Pro. My username is {{ user.username }}">
+                        <!-- Until online payment is added: contact to upgrade -->
+                        {% if whatsapp_number %}
+                        <a class="btn btn-p w-100 mb-2" target="_blank" rel="noopener"
+                           href="https://wa.me/{{ whatsapp_number }}?text=Hi%2C%20I%20want%20to%20upgrade%20to%20Pro.%20My%20username%20is%20{{ user.username|urlencode }}">
                             💬 Upgrade via WhatsApp
                         </a>
+                        {% endif %}
+                        {% if support_email %}
                         <a class="btn btn-outline-secondary w-100"
-                           href="mailto:{{ support_email }}?subject=Pro upgrade request - {{ user.username }}">
+                           href="mailto:{{ support_email }}?subject=Pro%20upgrade%20request%20-%20{{ user.username|urlencode }}">
                             ✉️ Upgrade via Email
                         </a>
+                        {% endif %}
                         <p class="small text-muted text-center mt-3 mb-0">Your account gets upgraded right after payment confirmation.</p>
                     {% else %}
                         <a href="{% url 'register' %}" class="btn btn-p w-100">Create account to upgrade</a>
