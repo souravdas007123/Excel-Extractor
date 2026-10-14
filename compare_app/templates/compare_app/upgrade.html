@@ -59,15 +59,19 @@
 
                 {% if not is_pro %}
                     {% if user.is_authenticated %}
-                        <!-- Razorpay aane tak: contact to upgrade -->
-                        <a class="btn btn-p w-100 mb-2" target="_blank"
-                           href="https://wa.me/{{ whatsapp_number }}?text=Hi, I want to upgrade to Pro. My username is {{ user.username }}">
+                        <!-- Until online payment is added: contact to upgrade -->
+                        {% if whatsapp_number %}
+                        <a class="btn btn-p w-100 mb-2" target="_blank" rel="noopener"
+                           href="https://wa.me/{{ whatsapp_number }}?text=Hi%2C%20I%20want%20to%20upgrade%20to%20Pro.%20My%20username%20is%20{{ user.username|urlencode }}">
                             💬 Upgrade via WhatsApp
                         </a>
+                        {% endif %}
+                        {% if support_email %}
                         <a class="btn btn-outline-secondary w-100"
-                           href="mailto:{{ support_email }}?subject=Pro upgrade request - {{ user.username }}">
+                           href="mailto:{{ support_email }}?subject=Pro%20upgrade%20request%20-%20{{ user.username|urlencode }}">
                             ✉️ Upgrade via Email
                         </a>
+                        {% endif %}
                         <p class="small text-muted text-center mt-3 mb-0">Your account gets upgraded right after payment confirmation.</p>
                     {% else %}
                         <a href="{% url 'register' %}" class="btn btn-p w-100">Create account to upgrade</a>

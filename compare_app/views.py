@@ -7,15 +7,16 @@ from pathlib import Path
 
 import pandas as pd
 from django.conf import settings
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import F
 from django.http import FileResponse, Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from .models import UserProfile
+from . import cleaning
 from .forms import RegisterForm
+from .models import UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +24,10 @@ logger = logging.getLogger(__name__)
 # CONFIG
 # ==========================================
 FREE_ROW_LIMIT = 1000
-PRO_ROW_LIMIT = 1048575 
+PRO_ROW_LIMIT = 1048575   # Excel max data rows (1,048,576 - 1 header)
 FREE_MAX_FILE_MB = 5
 PRO_MAX_FILE_MB = 150
-AALLOWED_EXTENSIONS = ('.xlsx', '.xls', '.csv')
+ALLOWED_EXTENSIONS = ('.xlsx', '.xls', '.csv')
 RESULT_MAX_AGE_SECONDS = 24 * 60 * 60  # results 24 ghante baad delete
 
 RESULT_DIR = Path(settings.BASE_DIR) / 'processed_files'
@@ -34,13 +35,16 @@ RESULT_DIR.mkdir(exist_ok=True)
 
 TOKEN_RE = re.compile(r'^[0-9a-f]{32}$')
 
-SUPPORT_EMAIL = 'support@yourdomain.com'   # apna email daalo
-WHATSAPP_NUMBER = '919999999999'           # country code ke saath, + ke bina
+# Contact details come from settings.py / environment variables (SUPPORT_EMAIL, WHATSAPP_NUMBER)
+SUPPORT_EMAIL = getattr(settings, 'SUPPORT_EMAIL', '')
+WHATSAPP_NUMBER = getattr(settings, 'WHATSAPP_NUMBER', '')
 
 
 class LimitReached(ValueError):
     """Free plan ki limit cross hone par (upgrade prompt dikhane ke liye)."""
     pass
+
+
 # ==========================================
 # HELPERS
 # ==========================================
@@ -54,7 +58,7 @@ def get_user_plan(user):
 
 def validate_upload(file_obj, is_pro):
     name = file_obj.name.lower()
-    if not name.endswith(AALLOWED_EXTENSIONS):
+    if not name.endswith(ALLOWED_EXTENSIONS):
         raise ValueError("Only .xlsx, .xls or .csv files are allowed.")
     max_mb = PRO_MAX_FILE_MB if is_pro else FREE_MAX_FILE_MB
     if file_obj.size > max_mb * 1024 * 1024:
@@ -70,15 +74,6 @@ def check_row_limit(total_rows, is_pro, request):
         raise LimitReached(
             f"Your file has {total_rows:,} rows, but the Free plan supports up to {limit:,} rows per file."
         )
-        # if request.user.is_authenticated:
-        #     raise ValueError(
-        #         f"Limit Reached! Free plan supports up to {limit} rows. "
-        #         f"Your file has {total_rows} rows. Please upgrade to PRO."
-        #     )
-        # raise ValueError(
-        #     f"Limit Reached! Free version supports up to {limit} rows. "
-        #     f"Your file has {total_rows} rows. Please Login & Upgrade to PRO."
-        # )
 
 
 def parse_columns(columns_input):
@@ -87,6 +82,7 @@ def parse_columns(columns_input):
         raise ValueError("Please enter at least one column name.")
     # duplicate names hatao, order same rakho
     return list(dict.fromkeys(cols))
+
 
 def read_table(file_obj, columns=None):
     """Excel (.xlsx/.xls) ya CSV padhta hai. columns diye to sirf wahi columns lauta hai."""
@@ -127,14 +123,6 @@ def read_table(file_obj, columns=None):
     return df
 
 
-def find_phone_col(columns):
-    for col in columns:
-        low = col.lower()
-        if 'phone' in low or 'mobile' in low or 'contact' in low:
-            return col
-    return None
-
-
 def cleanup_old_files():
     now = time.time()
     for f in RESULT_DIR.glob('*.xlsx'):
@@ -143,6 +131,15 @@ def cleanup_old_files():
                 f.unlink()
         except OSError:
             pass
+
+
+def excel_engine():
+    """xlsxwriter is several times faster than openpyxl for big files; fall back if missing."""
+    try:
+        import xlsxwriter  # noqa: F401
+        return 'xlsxwriter'
+    except ImportError:
+        return 'openpyxl'
 
 
 def save_excel(request, sheets, download_name, allow_empty=False):
@@ -157,7 +154,7 @@ def save_excel(request, sheets, download_name, allow_empty=False):
 
     token = uuid.uuid4().hex
     path = RESULT_DIR / f"{token}.xlsx"
-    with pd.ExcelWriter(path, engine='openpyxl') as writer:
+    with pd.ExcelWriter(path, engine=excel_engine()) as writer:
         for sheet_name, frame in sheets.items():
             frame.to_excel(writer, sheet_name=sheet_name[:31], index=False)
 
@@ -198,7 +195,7 @@ def format_duration(seconds):
 def landing_page(request):
     if request.user.is_authenticated:
         return redirect('app')
-    return render(request, 'compare_app/landing.html')
+    return render(request, 'compare_app/landing.html', {'support_email': SUPPORT_EMAIL})
 
 
 # ==========================================
@@ -266,6 +263,7 @@ def excel_dashboard(request):
         'active_tab': 'single',
         'is_pro': is_pro,
         'free_row_limit': FREE_ROW_LIMIT,
+        'pro_max_mb': PRO_MAX_FILE_MB,
         'total_rows_processed': profile.total_rows_processed if profile else 0,
     }
 
@@ -297,8 +295,8 @@ def excel_dashboard(request):
 
                 df = read_table(file_single)
                 df.columns = df.columns.astype(str).str.strip()
-                df = df.dropna(how='all') 
-                total_rows = len(df)  
+                df = df.dropna(how='all')   # fully empty (formatted-only) rows are not data
+                total_rows = len(df)
 
                 if total_rows == 0:
                     raise ValueError("The uploaded file has no data rows.")
@@ -311,72 +309,20 @@ def excel_dashboard(request):
                         f"Available columns: {list(df.columns)}"
                     )
 
-                df.insert(0, 'Excel Row', df.index + 2)
-
-                total_blanks = int(df[columns_to_check].isnull().sum().sum())
-
-                phone_col = find_phone_col(columns_to_check)
-                if phone_col:
-                    df[phone_col] = (
-                        df[phone_col].fillna('').astype(str)
-                        .str.replace(r'\.0$', '', regex=True)
-                    )
-
-                df_check = df.copy()
-                for col in columns_to_check:
-                    df_check[col] = df_check[col].fillna('').astype(str).str.strip()
-                    if auto_fix:
-                        low = col.lower()
-                        if 'name' in low or 'state' in low or 'city' in low:
-                            df_check[col] = df_check[col].str.title()
-                    else:
-                        df_check[col] = df_check[col].str.lower()
-
-                valid_indices = df.index
-                blanks_df = pd.DataFrame()
-                invalid_phones_df = pd.DataFrame()
-                duplicates_df = pd.DataFrame()
-
-                has_empty_cells = df_check[columns_to_check].eq('').any(axis=1)
-                empty_cells_df = df.loc[has_empty_cells]
-
-                # --- 1. BLANK REMOVAL ---
-                if remove_blanks:
-                    blank_indices = df_check[has_empty_cells].index
-                    blanks_df = df.loc[blank_indices]
-                    valid_indices = valid_indices.difference(blank_indices)
-                    df_check = df_check.loc[valid_indices]
-
-                # --- 2. PHONE FIX / INVALID REMOVAL ---
-                if phone_col:
-                    only_numbers = df_check[phone_col].astype(str).str.replace(r'\D', '', regex=True)
-
-                    if auto_fix:
-                        only_numbers = only_numbers.str.replace(r'^91(?=\d{10}$)', '', regex=True)
-                        only_numbers = only_numbers.str.replace(r'^0+(?=\d{10}$)', '', regex=True)
-
-                    df_check[phone_col] = only_numbers
-
-                    if remove_invalid_phones:
-                        is_invalid = (only_numbers.str.len() > 0) & (only_numbers.str.len() != 10)
-                        invalid_indices = df_check[is_invalid].index
-                        invalid_phones_df = df.loc[invalid_indices]
-                        valid_indices = valid_indices.difference(invalid_indices)
-                        df_check = df_check.loc[valid_indices]
-
-                # --- 3. DUPLICATE REMOVAL ---
-                if remove_duplicates:
-                    is_duplicate = df_check.duplicated(subset=columns_to_check, keep='first')
-                    duplicate_indices = df_check[is_duplicate].index
-                    duplicates_df = df.loc[duplicate_indices]
-                    valid_indices = valid_indices.difference(duplicate_indices)
-
-                # --- FINAL CLEAN DATA (original data, auto_fix par cleaned values) ---
-                fresh_df = df.loc[valid_indices].copy()
-                if auto_fix:
-                    for col in columns_to_check:
-                        fresh_df[col] = df_check.loc[valid_indices, col]
-                fresh_df_export = fresh_df.drop(columns=['Excel Row'])
+                result = cleaning.clean_single(
+                    df, columns_to_check,
+                    remove_duplicates=remove_duplicates,
+                    remove_blanks=remove_blanks,
+                    remove_invalid_phones=remove_invalid_phones,
+                    auto_fix=auto_fix,
+                )
+                fresh_df = result['fresh_df']
+                fresh_df_export = result['fresh_export']
+                duplicates_df = result['duplicates_df']
+                blanks_df = result['blanks_df']
+                invalid_phones_df = result['invalid_phones_df']
+                empty_cells_df = result['empty_cells_df']
+                total_blanks = result['total_blanks']
 
                 health_score = math.floor((len(fresh_df) / total_rows) * 100) if total_rows > 0 else 0
                 if health_score >= 90:
@@ -441,8 +387,8 @@ def excel_dashboard(request):
                     raise ValueError(
                         f"One or both files do not contain all these columns: {columns_to_check}"
                     )
-                df1 = df1.dropna(how='all')        # NAYI LINE
-                df2 = df2.dropna(how='all')        # NAYI LINE
+                df1 = df1.dropna(how='all')   # fully empty (formatted-only) rows are not data
+                df2 = df2.dropna(how='all')
                 check_row_limit(max(len(df1), len(df2)), is_pro, request)
 
                 if is_pro and (len(df1) + len(df2)) > 2000000:
@@ -452,25 +398,12 @@ def excel_dashboard(request):
                 if len(df1) == 0 or len(df2) == 0:
                     raise ValueError("One of the uploaded files has no data rows.")
 
-                df1.insert(0, 'File 1 Row', df1.index + 2)
-                df2.insert(0, 'File 2 Row', df2.index + 2)
-
-                phone_col = find_phone_col(columns_to_check)
-                if phone_col:
-                    for d in (df1, df2):
-                        d[phone_col] = (
-                            d[phone_col].fillna('').astype(str)
-                            .str.replace(r'\.0$', '', regex=True)
-                        )
-
-                total_blanks = int(df1.isnull().sum().sum() + df2.isnull().sum().sum())
-
-                df1_clean, df2_clean = df1.copy(), df2.copy()
-                for col in columns_to_check:
-                    df1_clean[col] = df1_clean[col].fillna('').astype(str).str.strip().str.lower()
-                    df2_clean[col] = df2_clean[col].fillna('').astype(str).str.strip().str.lower()
-
-                duplicates = pd.merge(df1_clean, df2_clean, on=columns_to_check, how='inner')
+                duplicates, total_blanks = cleaning.compare_frames(df1, df2, columns_to_check)
+                if len(duplicates) > PRO_ROW_LIMIT:
+                    raise ValueError(
+                        f"The two files have {len(duplicates):,} matching rows, which is more than one Excel "
+                        f"sheet can hold. Try matching on more columns so each row is more specific."
+                    )
 
                 if duplicates.empty:
                     main_sheets = {'Result': pd.DataFrame({'Message': ['No duplicates found']})}
@@ -497,6 +430,9 @@ def excel_dashboard(request):
                 profile.refresh_from_db()
                 context['total_rows_processed'] = profile.total_rows_processed
 
+        except LimitReached as e:
+            # Free plan limit: the template shows an Upgrade card instead of a plain error
+            context['limit_error'] = str(e)
         except ValueError as e:
             context['error'] = str(e)
         except Exception:
