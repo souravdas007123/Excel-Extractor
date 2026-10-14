@@ -1,0 +1,86 @@
+{# Shared look & feel, modelled on the "billing" app: flat, compact, light grey page, white bordered cards. #}
+{# Include this partial AFTER the Bootstrap CSS link so the overrides win. #}
+<style>
+  :root {
+    --bg:#f4f5f7; --card:#fff; --ink:#1d2330; --muted:#667085; --line:#d9dde5;
+    --brand:#1f5eff; --brand-hover:#1a4fd6; --brand-ink:#fff;
+    --bad:#c0262d; --ok:#117a3d; --out:#f1f4fb;
+
+    /* Re-point Bootstrap 5.3 to the same palette */
+    --bs-body-font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --bs-body-font-size: .875rem;
+    --bs-body-line-height: 1.45;
+    --bs-body-color: #1d2330;      --bs-body-color-rgb: 29,35,48;
+    --bs-body-bg: #f4f5f7;         --bs-body-bg-rgb: 244,245,247;
+    --bs-secondary-color: #667085;
+    --bs-border-color: #d9dde5;
+    --bs-primary: #1f5eff;         --bs-primary-rgb: 31,94,255;
+    --bs-success: #117a3d;         --bs-success-rgb: 17,122,61;
+    --bs-danger: #c0262d;          --bs-danger-rgb: 192,38,45;
+    --bs-link-color: #1f5eff;      --bs-link-color-rgb: 31,94,255;
+    --bs-link-hover-color: #1a4fd6; --bs-link-hover-color-rgb: 26,79,214;
+  }
+  body { background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  h1,h2,h3,h4,h5,h6 { font-weight: 700; }
+  .text-warning { color: #b45309 !important; }
+
+  /* ---------- top bar (same as billing) ---------- */
+  header.top { background:#fff; border-bottom:1px solid var(--line); padding:0 16px; display:flex; align-items:center; gap:18px; min-height:48px; flex-wrap:wrap; }
+  header.top a:not(.btn) { color:var(--ink); text-decoration:none; font-weight:600; }
+  header.top a:not(.btn):hover, header.top a.active { color:var(--brand); }
+  header.top a.brand { font-weight:800; letter-spacing:-.2px; }
+  header.top a.tab-link { display:flex; align-items:center; height:48px; }
+  header.top a.tab-link.active { box-shadow: inset 0 -2px 0 var(--brand); }
+  header.top .sp { flex:1; }
+  header.top .btn { padding:5px 12px; }
+  .plan-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--out); color:var(--muted); border:1px solid var(--line); }
+  .plan-badge.pro { background:#e6f4ec; color:var(--ok); border-color:#bfe3cd; }
+  .page { max-width:1280px; margin:0 auto; padding:16px; }
+
+  /* ---------- cards ---------- */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; box-shadow:none; margin-bottom:12px; }
+  .card.p-4, .card.p-md-5 { padding:16px 18px !important; }
+
+  /* ---------- forms ---------- */
+  .form-label { font-size:12px; font-weight:600; color:var(--muted); margin-bottom:4px; }
+  .form-control, .form-select { border:1px solid var(--line); border-radius:6px; padding:7px 8px; font-size:14px; color:var(--ink); background-color:#fff; box-shadow:none; }
+  .form-control.bg-light { background-color:#fff !important; }
+  .form-control:focus, .form-select:focus { outline:2px solid #b8ccff; border-color:var(--brand); box-shadow:none; }
+  .form-check-input { width:1.1em; height:1.1em; margin-top:.2em; cursor:pointer; border-color:#98a2b3; }
+  .form-check-input:checked { background-color:var(--brand); border-color:var(--brand); }
+  .form-check-input:focus { border-color:var(--brand); box-shadow:0 0 0 3px #b8ccff; }
+  .form-check-label { cursor:pointer; font-weight:500; color:var(--ink); }
+
+  /* ---------- buttons ---------- */
+  .btn { --bs-btn-padding-x:14px; --bs-btn-padding-y:8px; --bs-btn-font-size:14px; --bs-btn-font-weight:600; --bs-btn-border-radius:6px;
+         border-radius:6px; padding:8px 14px; font-weight:600; letter-spacing:0; box-shadow:none; transform:none; }
+  .btn-sm { padding:5px 10px; font-size:13px; }
+  .btn-primary { --bs-btn-bg:#1f5eff; --bs-btn-border-color:#1f5eff; --bs-btn-hover-bg:#1a4fd6; --bs-btn-hover-border-color:#1a4fd6;
+                 --bs-btn-active-bg:#1744b8; --bs-btn-active-border-color:#1744b8; --bs-btn-disabled-bg:#1f5eff; --bs-btn-disabled-border-color:#1f5eff; }
+  .btn-success { --bs-btn-bg:#117a3d; --bs-btn-border-color:#117a3d; --bs-btn-hover-bg:#0e6633; --bs-btn-hover-border-color:#0e6633;
+                 --bs-btn-active-bg:#0b5429; --bs-btn-active-border-color:#0b5429; --bs-btn-disabled-bg:#117a3d; --bs-btn-disabled-border-color:#117a3d; }
+  .btn-outline-danger { --bs-btn-color:#c0262d; --bs-btn-border-color:#c0262d; --bs-btn-hover-bg:#c0262d; --bs-btn-hover-border-color:#c0262d;
+                        --bs-btn-active-bg:#c0262d; --bs-btn-active-border-color:#c0262d; border-width:1px; }
+
+  /* ---------- tables, accordions, alerts ---------- */
+  .table { font-size:13px; margin-bottom:0; }
+  .table thead th { background:#f8f9fb !important; color:var(--muted) !important; font-size:12px; font-weight:600; text-transform:none; letter-spacing:0; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .table td { padding:5px 8px; vertical-align:middle; border-bottom:1px solid #eef0f4; font-weight:400; }
+  .table-warning   { --bs-table-bg:#fffbeb; --bs-table-color:#92400e; }
+  .table-danger    { --bs-table-bg:#fef2f2; --bs-table-color:#991b1b; }
+  .table-info      { --bs-table-bg:#f0f9ff; --bs-table-color:#075985; }
+  .table-secondary { --bs-table-bg:#f8f9fb; --bs-table-color:#334155; }
+  .table-success   { --bs-table-bg:#ecfdf5; --bs-table-color:#065f46; }
+
+  .accordion-item { border:1px solid var(--line); border-radius:8px !important; margin-bottom:8px; overflow:hidden; box-shadow:none; background:#fff; }
+  .accordion-button { font-weight:600; font-size:14px; padding:11px 16px; background:#fff; color:var(--ink); }
+  .accordion-button:not(.collapsed) { background:#f8f9fb; color:var(--ink); box-shadow:none; border-bottom:1px solid var(--line); }
+  .accordion-button:focus { box-shadow:none; border-color:var(--line); }
+
+  .alert { border-radius:6px; }
+  .alert-danger { --bs-alert-bg:#fdecec; --bs-alert-color:#c0262d; --bs-alert-border-color:#f5c2c4; }
+  .badge { font-weight:600; border-radius:4px; }
+  .shadow, .shadow-sm, .shadow-lg { box-shadow:none !important; }
+  .rounded-3 { border-radius:6px !important; }
+  .rounded-4 { border-radius:8px !important; }
+</style>
