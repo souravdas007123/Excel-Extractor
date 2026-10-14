@@ -143,8 +143,7 @@
   body { font-family: var(--font); font-size: .9rem; line-height: 1.55; text-rendering: optimizeLegibility; }
   h1,h2,h3,h4,h5,h6 { letter-spacing: -.015em; line-height: 1.25; }
   .table td, .table th, .stat-card h3, .health-score-text { font-variant-numeric: tabular-nums; }
-  p { max-width: 70ch; }
-  .text-center p, .page p.mb-0 { max-width: none; }
+  .page .card p { max-width: 70ch; }   /* readable line length inside tool cards only */
 
   /* top bar */
   header.top { box-shadow: var(--shadow-1); position: sticky; top: 0; z-index: 1000; padding: 0 20px; min-height: 56px; gap: 22px; }
