@@ -165,10 +165,12 @@
   .form-control, .form-select { min-height: 40px; border-radius: 8px; font-size: 14px; transition: border-color .15s, box-shadow .15s; }
   .form-control:hover:not(:focus), .form-select:hover:not(:focus) { border-color: var(--muted); }
   .form-control:focus, .form-select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--focus); }
-  input[type=file].form-control::file-selector-button { border: 0; border-right: 1px solid var(--line); background: var(--out); color: var(--ink);
-      font-weight: 600; margin-right: 12px; padding: 9px 14px; transition: background .15s; }
-  input[type=file].form-control { padding: 0 12px 0 0; line-height: 38px; }
+  input[type=file].form-control { padding: 0; line-height: 38px; overflow: hidden; }
+  input[type=file].form-control::file-selector-button { margin: 0 14px 0 0; padding: 0 18px; height: 100%; line-height: 38px; border: 0; border-right: 1px solid var(--line);
+      border-radius: 0; background: var(--out); color: var(--ink); font-weight: 600; transition: background .15s; }
+  input[type=file].form-control:hover::file-selector-button { background: var(--line); }
   .highlight-box { border-radius: 8px; }
+  .highlight-box .form-switch { padding-left: 0; }
 
   /* buttons */
   .btn { border-radius: 8px; transition: background-color .15s, border-color .15s, box-shadow .15s, color .15s; }
