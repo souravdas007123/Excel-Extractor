@@ -14,7 +14,7 @@ from django.http import FileResponse, Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from . import cleaning
+from . import cleaning, xlsx_writer
 from .forms import RegisterForm
 from .models import UserProfile
 
@@ -142,6 +142,29 @@ def excel_engine():
         return 'openpyxl'
 
 
+def write_excel_file(path, sheets):
+    """
+    Fast path: xlsx_writer (about 2x faster, low memory). If it fails for any reason
+    (odd data types etc.) we delete the partial file and use the slower pandas writer.
+    """
+    if excel_engine() == 'xlsxwriter':
+        try:
+            xlsx_writer.write_workbook(path, sheets)
+            return
+        except Exception:
+            logger.exception("Fast Excel writer failed, falling back to pandas")
+            try:
+                Path(path).unlink()
+            except OSError:
+                pass
+        kwargs = {'engine_kwargs': {'options': {'strings_to_formulas': False, 'strings_to_urls': False}}}
+    else:
+        kwargs = {}
+    with pd.ExcelWriter(path, engine=excel_engine(), **kwargs) as writer:
+        for sheet_name, frame in sheets.items():
+            frame.to_excel(writer, sheet_name=sheet_name[:31], index=False)
+
+
 def save_excel(request, sheets, download_name, allow_empty=False):
     """
     sheets: {sheet_name: DataFrame}. File save karke download URL return karta hai.
@@ -154,9 +177,7 @@ def save_excel(request, sheets, download_name, allow_empty=False):
 
     token = uuid.uuid4().hex
     path = RESULT_DIR / f"{token}.xlsx"
-    with pd.ExcelWriter(path, engine=excel_engine()) as writer:
-        for sheet_name, frame in sheets.items():
-            frame.to_excel(writer, sheet_name=sheet_name[:31], index=False)
+    write_excel_file(path, sheets)
 
     files = request.session.get('result_files', {})
     files[token] = download_name
