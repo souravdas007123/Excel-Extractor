@@ -24,7 +24,7 @@
         .hero { padding: 110px 0 56px; text-align: center; background: var(--bg); border-bottom: 1px solid var(--line); }
         .hero-pill { display: inline-block; background: var(--out); color: var(--brand); border: 1px solid var(--line); font-weight: 600; font-size: .82rem; padding: 5px 14px; border-radius: 4px; margin-bottom: 18px; }
         .hero h1 { font-size: 2.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 18px; color: var(--ink); }
-        .grad { color: var(--brand); }
+        .grad { color: inherit; }
         .hero p.sub { font-size: 1.1rem; color: var(--muted); max-width: 640px; margin: 0 auto 28px; }
         .hero-note { color: var(--muted); font-size: .85rem; margin-top: 14px; }
         .mock { background: var(--card); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-align: left; }
@@ -86,9 +86,21 @@
         [data-bs-theme="dark"] .plist li .n { color: #5b6478; }
         [data-bs-theme="dark"] .plist li.off { color: #6f7a90; }
         [data-bs-theme="dark"] .btn-co { background: var(--card); }
+        .navbar { box-shadow: var(--shadow-1); padding-top: 12px !important; padding-bottom: 12px !important; }
+        .hero { padding-top: 120px; }
+        .hero h1 { font-size: 3.1rem; letter-spacing: -.03em; max-width: 16ch; margin-left: auto; margin-right: auto; }
+        .hero p.sub { max-width: 56ch; }
+        .hero-pill { border-radius: 999px; }
+        .mock { border-radius: 12px; box-shadow: var(--shadow-2); }
+        .fcard, .usecase, .pcard { border-radius: 12px; box-shadow: var(--shadow-1); transition: border-color .15s, box-shadow .15s; }
+        .fcard:hover, .usecase:hover { border-color: var(--brand); box-shadow: var(--shadow-2); }
+        .pcard.pro { box-shadow: var(--shadow-2); }
+        .sec-title { letter-spacing: -.02em; }
+        .eyebrow { text-transform: none; letter-spacing: 0; font-size: .9rem; }
+        .cta { border-radius: 0; }
         @media (max-width: 768px) {
             .hero { padding-top: 96px; }
-            .hero h1 { font-size: 2rem; }
+            .hero h1 { font-size: 2.1rem; max-width: none; }
             .sec-title { font-size: 1.6rem; }
             .arrow-mid { transform: rotate(90deg); padding: 6px 0; }
         }
