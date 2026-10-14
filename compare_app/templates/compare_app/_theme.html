@@ -209,6 +209,29 @@
   .tab-section.active > .card:first-child, .auth .card { animation: df-rise .35s ease-out both; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } html { scroll-behavior: auto !important; } }
   @media (max-width: 768px) { header.top { gap: 14px; padding: 0 12px; } header.top a.tab-link { height: 44px; } .card.p-4, .card.p-md-5 { padding: 18px !important; } }
+
+  /* ---------- header navigation (segmented tabs + account menu) ---------- */
+  header.top nav.tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--out); border: 1px solid var(--line); border-radius: 10px; }
+  header.top nav.tabs a.tab-link { height: auto; padding: 6px 14px; border-radius: 7px; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--muted); box-shadow: none; white-space: nowrap; transition: background-color .15s, color .15s; }
+  header.top nav.tabs a.tab-link:hover { color: var(--ink); }
+  header.top nav.tabs a.tab-link.active { background: var(--card); color: var(--brand); box-shadow: var(--shadow-1); }
+  header.top nav.tabs a.tab-link svg { flex: none; }
+  header.top .upgrade-btn { border-radius: 8px; padding: 6px 14px; }
+  .user-chip { display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 3px; color: var(--ink); font-weight: 600; font-size: 13px; cursor: pointer; transition: border-color .15s, background-color .15s; }
+  .user-chip:hover, .user-chip[aria-expanded="true"] { border-color: var(--brand); background: var(--out); }
+  .user-chip .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .user-chip .plan-badge { margin: 0; }
+  .user-menu { min-width: 220px; border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-2); padding: 6px; background: var(--card); --bs-dropdown-link-color: var(--ink); --bs-dropdown-link-hover-bg: var(--out); --bs-dropdown-link-hover-color: var(--ink); --bs-dropdown-link-active-bg: var(--out); --bs-dropdown-divider-bg: var(--line); }
+  .user-menu .menu-head { padding: 8px 12px 4px; }
+  .user-menu .dropdown-item { border-radius: 6px; font-weight: 500; padding: 7px 12px; }
+  .theme-slot .theme-toggle { position: static; box-shadow: none; padding: 5px 12px; }
+  @media (max-width: 768px) {
+    header.top { flex-wrap: wrap; row-gap: 8px; padding: 8px 12px; }
+    header.top .sp { display: none; }
+    header.top nav.tabs { order: 3; width: 100%; }
+    header.top nav.tabs a.tab-link { flex: 1; justify-content: center; padding: 8px 10px; }
+    header.top .upgrade-btn { margin-left: auto; }
+  }
 </style>
 
 <script>
@@ -223,6 +246,7 @@
       try { localStorage.setItem('df-theme', next); } catch (e) {}
       btn.textContent = label();
     });
-    document.body.appendChild(btn);
+    var slot = document.querySelector('.theme-slot');
+    (slot || document.body).appendChild(btn);
   });
 </script>
