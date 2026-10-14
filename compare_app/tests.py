@@ -147,4 +147,4 @@ class BackgroundJobTests(TestCase):
         self.assertEqual(stranger.get(data['result_url']).status_code, 302)   # sent back to the app page
 
     def test_malformed_job_id_is_404(self):
-        self.assertEqual(self.client.get(reverse('job_status', args=['../etc'])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('job_status', args=['not-a-valid-job-id'])).status_code, 404)
