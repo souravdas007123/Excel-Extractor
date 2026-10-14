@@ -1,0 +1,1 @@
+{"id": "4ce61c7276b949b39992cdd70fa1ac52", "owner": "sij9ztfp9axyj64wmbhudhyp3ir9lpn23", "mode": "single", "status": "error", "progress": 100, "message": "Columns not found: ['State']. Available columns: ['Name', 'Phone']", "created": 1791976710.0091417, "updated": 1791976710.087401, "context": {}, "files": {}}
