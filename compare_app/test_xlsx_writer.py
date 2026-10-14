@@ -50,7 +50,8 @@ class WriterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, 'o.xlsx')
             xlsx_writer.write_workbook(path, {'x' * 50: df})
-            self.assertEqual(pd.ExcelFile(path, engine='openpyxl').sheet_names, ['x' * 31])
+            with pd.ExcelFile(path, engine='openpyxl') as book:   # closed before cleanup (Windows locks open files)
+                self.assertEqual(book.sheet_names, ['x' * 31])
 
 
 if __name__ == '__main__':
