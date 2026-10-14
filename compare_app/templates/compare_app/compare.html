@@ -19,6 +19,8 @@
         .stat-warning h3 { color: #b45309; }
         .stat-danger h3 { color: var(--bad); }
         .stat-info h3 { color: #0e7490; }
+        [data-bs-theme="dark"] .stat-warning h3 { color: #fbbf24; }
+        [data-bs-theme="dark"] .stat-info h3 { color: #38bdf8; }
         .stat-secondary h3 { color: var(--muted); }
 
         .table-responsive { max-height: 400px; overflow-y: auto; margin: 0; }
@@ -178,7 +180,7 @@
                     </div>
                     <div class="flex-grow-1 min-vw-50">
                         <h4 class="fw-bold mb-2">Overall Data Health</h4>
-                        <div class="progress" style="height: 12px; border-radius: 10px; background: #f1f5f9;">
+                        <div class="progress" style="height: 12px; border-radius: 10px; background: var(--out);">
                             <div id="health-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-{{ s_health_color }}" role="progressbar" style="width: 0%;" data-health-score="{{ s_health_score }}" aria-valuenow="{{ s_health_score }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                         <p class="text-muted mt-2 mb-0 small">Based on the percentage of valid, duplicate-free rows successfully recovered from the original file.</p>

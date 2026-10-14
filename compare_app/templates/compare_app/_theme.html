@@ -1,10 +1,19 @@
 {# Shared look & feel, modelled on the "billing" app: flat, compact, light grey page, white bordered cards. #}
 {# Include this partial AFTER the Bootstrap CSS link so the overrides win. #}
+<script>
+  /* Apply saved theme before paint (default: dark, easier on the eyes) */
+  (function () {
+    var t = 'dark';
+    try { t = localStorage.getItem('df-theme') || 'dark'; } catch (e) {}
+    document.documentElement.setAttribute('data-bs-theme', t);
+  })();
+</script>
 <style>
   :root {
     --bg:#f4f5f7; --card:#fff; --ink:#1d2330; --muted:#667085; --line:#d9dde5;
     --brand:#1f5eff; --brand-hover:#1a4fd6; --brand-ink:#fff;
     --bad:#c0262d; --ok:#117a3d; --out:#f1f4fb;
+    --surface:#fff; --head:#f8f9fb; --row-line:#eef0f4; --focus:#b8ccff; --ok-bg:#e6f4ec; --ok-line:#bfe3cd;
 
     /* Re-point Bootstrap 5.3 to the same palette */
     --bs-body-font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -20,12 +29,44 @@
     --bs-link-color: #1f5eff;      --bs-link-color-rgb: 31,94,255;
     --bs-link-hover-color: #1a4fd6; --bs-link-hover-color-rgb: 26,79,214;
   }
+  /* ---------- dark palette (same blue brand, softer surfaces) ---------- */
+  [data-bs-theme="dark"] {
+    --bg:#12151c; --card:#1a1f2b; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3445;
+    --brand:#4c82ff; --brand-hover:#6b97ff; --brand-ink:#fff;
+    --bad:#ff7a80; --ok:#3ddc84; --out:#20273a;
+    --surface:#1a1f2b; --head:#20273a; --row-line:#252d3d; --focus:#2f4a8f; --ok-bg:#12301f; --ok-line:#1f5a39;
+    --bs-body-color:#e6e9f0; --bs-body-color-rgb:230,233,240;
+    --bs-body-bg:#12151c; --bs-body-bg-rgb:18,21,28;
+    --bs-secondary-color:#9aa3b5; --bs-border-color:#2c3445;
+    --bs-link-color:#6b97ff; --bs-link-hover-color:#8fb0ff;
+    --bs-link-color-rgb:107,151,255; --bs-link-hover-color-rgb:143,176,255;
+    color-scheme: dark;
+  }
+  [data-bs-theme="dark"] .bg-light, [data-bs-theme="dark"] .bg-white { background-color: var(--out) !important; }
+  [data-bs-theme="dark"] .text-dark { color: var(--ink) !important; }
+  [data-bs-theme="dark"] .badge.text-dark { color:#1d2330 !important; }
+  [data-bs-theme="dark"] .text-muted { color: var(--muted) !important; }
+  [data-bs-theme="dark"] .text-warning { color:#fbbf24 !important; }
+  [data-bs-theme="dark"] .btn-light, [data-bs-theme="dark"] .btn-outline-secondary { color: var(--ink); }
+  [data-bs-theme="dark"] .table-warning   { --bs-table-bg:#3a2f12; --bs-table-color:#fcd9a0; }
+  [data-bs-theme="dark"] .table-danger    { --bs-table-bg:#3d1c20; --bs-table-color:#ffb3b8; }
+  [data-bs-theme="dark"] .table-info      { --bs-table-bg:#12303f; --bs-table-color:#a5dcf5; }
+  [data-bs-theme="dark"] .table-secondary { --bs-table-bg:#20273a; --bs-table-color:#c5cbd8; }
+  [data-bs-theme="dark"] .table-success   { --bs-table-bg:#12301f; --bs-table-color:#9be7bd; }
+  [data-bs-theme="dark"] .alert-danger { --bs-alert-bg:#3d1c20; --bs-alert-color:#ffb3b8; --bs-alert-border-color:#6b2a30; }
+  [data-bs-theme="dark"] .form-check-input:not(:checked) { background-color: var(--out); }
+
+  /* theme toggle (fixed, bottom right) */
+  .theme-toggle { position:fixed; right:14px; bottom:14px; z-index:2000; border:1px solid var(--line); background:var(--card); color:var(--ink);
+                  border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; line-height:1.2; }
+  .theme-toggle:hover { border-color:var(--brand); color:var(--brand); }
+
   body { background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
   h1,h2,h3,h4,h5,h6 { font-weight: 700; }
   .text-warning { color: #b45309 !important; }
 
   /* ---------- top bar (same as billing) ---------- */
-  header.top { background:#fff; border-bottom:1px solid var(--line); padding:0 16px; display:flex; align-items:center; gap:18px; min-height:48px; flex-wrap:wrap; }
+  header.top { background:var(--surface); border-bottom:1px solid var(--line); padding:0 16px; display:flex; align-items:center; gap:18px; min-height:48px; flex-wrap:wrap; }
   header.top a:not(.btn) { color:var(--ink); text-decoration:none; font-weight:600; }
   header.top a:not(.btn):hover, header.top a.active { color:var(--brand); }
   header.top a.brand { font-weight:800; letter-spacing:-.2px; }
@@ -34,7 +75,7 @@
   header.top .sp { flex:1; }
   header.top .btn { padding:5px 12px; }
   .plan-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--out); color:var(--muted); border:1px solid var(--line); }
-  .plan-badge.pro { background:#e6f4ec; color:var(--ok); border-color:#bfe3cd; }
+  .plan-badge.pro { background:var(--ok-bg); color:var(--ok); border-color:var(--ok-line); }
   .page { max-width:1280px; margin:0 auto; padding:16px; }
 
   /* ---------- cards ---------- */
@@ -43,12 +84,12 @@
 
   /* ---------- forms ---------- */
   .form-label { font-size:12px; font-weight:600; color:var(--muted); margin-bottom:4px; }
-  .form-control, .form-select { border:1px solid var(--line); border-radius:6px; padding:7px 8px; font-size:14px; color:var(--ink); background-color:#fff; box-shadow:none; }
-  .form-control.bg-light { background-color:#fff !important; }
-  .form-control:focus, .form-select:focus { outline:2px solid #b8ccff; border-color:var(--brand); box-shadow:none; }
+  .form-control, .form-select { border:1px solid var(--line); border-radius:6px; padding:7px 8px; font-size:14px; color:var(--ink); background-color:var(--surface); box-shadow:none; }
+  .form-control.bg-light { background-color:var(--surface) !important; }
+  .form-control:focus, .form-select:focus { outline:2px solid var(--focus); border-color:var(--brand); box-shadow:none; }
   .form-check-input { width:1.1em; height:1.1em; margin-top:.2em; cursor:pointer; border-color:#98a2b3; }
   .form-check-input:checked { background-color:var(--brand); border-color:var(--brand); }
-  .form-check-input:focus { border-color:var(--brand); box-shadow:0 0 0 3px #b8ccff; }
+  .form-check-input:focus { border-color:var(--brand); box-shadow:0 0 0 3px var(--focus); }
   .form-check-label { cursor:pointer; font-weight:500; color:var(--ink); }
 
   /* ---------- buttons ---------- */
@@ -64,17 +105,17 @@
 
   /* ---------- tables, accordions, alerts ---------- */
   .table { font-size:13px; margin-bottom:0; }
-  .table thead th { background:#f8f9fb !important; color:var(--muted) !important; font-size:12px; font-weight:600; text-transform:none; letter-spacing:0; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
-  .table td { padding:5px 8px; vertical-align:middle; border-bottom:1px solid #eef0f4; font-weight:400; }
+  .table thead th { background:var(--head) !important; color:var(--muted) !important; font-size:12px; font-weight:600; text-transform:none; letter-spacing:0; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .table td { padding:5px 8px; vertical-align:middle; border-bottom:1px solid var(--row-line); font-weight:400; }
   .table-warning   { --bs-table-bg:#fffbeb; --bs-table-color:#92400e; }
   .table-danger    { --bs-table-bg:#fef2f2; --bs-table-color:#991b1b; }
   .table-info      { --bs-table-bg:#f0f9ff; --bs-table-color:#075985; }
   .table-secondary { --bs-table-bg:#f8f9fb; --bs-table-color:#334155; }
   .table-success   { --bs-table-bg:#ecfdf5; --bs-table-color:#065f46; }
 
-  .accordion-item { border:1px solid var(--line); border-radius:8px !important; margin-bottom:8px; overflow:hidden; box-shadow:none; background:#fff; }
-  .accordion-button { font-weight:600; font-size:14px; padding:11px 16px; background:#fff; color:var(--ink); }
-  .accordion-button:not(.collapsed) { background:#f8f9fb; color:var(--ink); box-shadow:none; border-bottom:1px solid var(--line); }
+  .accordion-item { border:1px solid var(--line); border-radius:8px !important; margin-bottom:8px; overflow:hidden; box-shadow:none; background:var(--surface); }
+  .accordion-button { font-weight:600; font-size:14px; padding:11px 16px; background:var(--surface); color:var(--ink); }
+  .accordion-button:not(.collapsed) { background:var(--head); color:var(--ink); box-shadow:none; border-bottom:1px solid var(--line); }
   .accordion-button:focus { box-shadow:none; border-color:var(--line); }
 
   .alert { border-radius:6px; }
@@ -84,3 +125,19 @@
   .rounded-3 { border-radius:6px !important; }
   .rounded-4 { border-radius:8px !important; }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'theme-toggle';
+    function label() { return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '☀ Light' : '🌙 Dark'; }
+    btn.textContent = label();
+    btn.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', next);
+      try { localStorage.setItem('df-theme', next); } catch (e) {}
+      btn.textContent = label();
+    });
+    document.body.appendChild(btn);
+  });
+</script>
