@@ -44,12 +44,12 @@
                 <div class="spinner-grow text-info" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
                 <div class="spinner-grow text-success" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
             </div>
-            <h3 class="fw-bold mb-4" style="letter-spacing: -0.5px;">Processing Data</h3>
+            <h3 id="overlay-title" class="fw-bold mb-4" style="letter-spacing: -0.5px;">Processing Data</h3>
             <div class="progress custom-progress mb-3">
                 <div id="dynamic-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
             </div>
             <h5 id="dynamic-loading-text" class="text-light fw-normal" style="font-size: 1.1rem;">Uploading your file securely...</h5>
-            <p class="text-white-50 mt-3 small">Large files may take 2 to 4 minutes. Please do not refresh or close this tab.</p>
+            <p id="overlay-hint" class="text-white-50 mt-3 small">Large files may take a few minutes. You can keep this tab open; if you reload, your progress is kept.</p>
         </div>
     </div>
 
@@ -104,7 +104,7 @@
                 <h3 class="fw-bold mb-2 text-dark" style="letter-spacing: -0.5px;">Single File Extractor</h3>
                 <p class="text-muted mb-4">Upload a dataset to automatically identify duplicates, missing values, and generate a sanitized list.</p>
 
-                <form method="POST" enctype="multipart/form-data" class="process-form">
+                <form method="POST" enctype="multipart/form-data" class="process-form" data-start-url="{% url 'start_job' %}">
                     {% csrf_token %}
                     <input type="hidden" name="mode" value="single">
                     <input type="hidden" name="action" id="action-single" value="process">
@@ -290,7 +290,7 @@
                 <h3 class="fw-bold mb-2 text-dark" style="letter-spacing: -0.5px;">Compare Two Datasets</h3>
                 <p class="text-muted mb-4">Upload two separate files to instantly find matching rows based on your specified columns.</p>
 
-                <form method="POST" enctype="multipart/form-data" class="process-form">
+                <form method="POST" enctype="multipart/form-data" class="process-form" data-start-url="{% url 'start_job' %}">
                     {% csrf_token %}
                     <input type="hidden" name="mode" value="compare">
                     <input type="hidden" name="action" id="action-compare" value="process">
@@ -359,6 +359,7 @@
 
     </div>
 
+    {% if resume_job %}{{ resume_job|json_script:"resume-job" }}{% endif %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -434,21 +435,121 @@
             }, 10000);
         }
 
-        // Form submit
-        document.querySelectorAll('.process-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                if (this.checkValidity()) {
-                    sessionStorage.setItem("real_process_start_time", Date.now());
-                    document.getElementById('loading-overlay').style.display = 'flex';
-                    startLoadingSimulation();
+        // ---------- Background processing: real upload progress + real server progress ----------
+        const overlay = document.getElementById('loading-overlay');
+        const bar = document.getElementById('dynamic-progress-bar');
+        const statusText = document.getElementById('dynamic-loading-text');
+        const titleEl = document.getElementById('overlay-title');
+        let pollTimer = null;
 
-                    const btn = this.querySelector('.submit-btn');
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
-                    btn.classList.add('disabled');
-                    btn.style.pointerEvents = 'none';
+        function setBar(percent) {
+            const v = Math.max(0, Math.min(100, percent));
+            bar.style.width = v.toFixed(0) + '%';
+            bar.innerText = v.toFixed(0) + '%';
+            bar.setAttribute('aria-valuenow', v.toFixed(0));
+        }
+
+        function showError(message, form) {
+            overlay.style.display = 'none';
+            if (form) {
+                const btn = form.querySelector('.submit-btn');
+                btn.innerHTML = btn.getAttribute('data-label');
+                btn.classList.remove('disabled');
+                btn.style.pointerEvents = '';
+            }
+            const box = document.createElement('div');
+            box.className = 'alert alert-danger mb-4';
+            box.innerHTML = '<span class="fw-bold">Error:</span> ';
+            box.appendChild(document.createTextNode(message));
+            const page = document.querySelector('.page');
+            page.insertBefore(box, page.firstChild);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function pollJob(statusUrl, resultUrl, form) {
+            titleEl.innerText = 'Processing Data';
+            setBar(0);
+            let failures = 0;
+            const tick = () => {
+                fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                    .then(r => { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
+                    .then(job => {
+                        failures = 0;
+                        setBar(job.progress || 0);
+                        if (job.message) { statusText.innerText = job.message; }
+                        if (job.status === 'done' || job.status === 'error' || job.status === 'limit') {
+                            clearInterval(pollTimer);
+                            setBar(100);
+                            window.location.href = resultUrl;   // result page shows the report, error or upgrade card
+                        }
+                    })
+                    .catch(() => {
+                        failures += 1;
+                        if (failures >= 3) { statusText.innerText = 'Connection problem, retrying...'; }
+                        if (failures >= 60) { clearInterval(pollTimer); showError('Lost connection to the server. Please reload the page.', form); }
+                    });
+            };
+            tick();
+            pollTimer = setInterval(tick, 1000);
+        }
+
+        function mb(bytes) { return (bytes / 1048576).toFixed(1); }
+
+        document.querySelectorAll('.process-form').forEach(form => {
+            const btn = form.querySelector('.submit-btn');
+            btn.setAttribute('data-label', btn.innerHTML);
+
+            form.addEventListener('submit', function(e) {
+                if (!this.checkValidity()) { return; }
+                sessionStorage.setItem("real_process_start_time", Date.now());
+                overlay.style.display = 'flex';
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                btn.classList.add('disabled');
+                btn.style.pointerEvents = 'none';
+
+                const startUrl = this.getAttribute('data-start-url');
+                if (!startUrl || !window.XMLHttpRequest || !window.FormData) {
+                    startLoadingSimulation();       // old browsers: normal submit, simulated progress
+                    return;
                 }
+                e.preventDefault();
+
+                titleEl.innerText = 'Uploading file';
+                statusText.innerText = 'Uploading your file securely...';
+                setBar(0);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', startUrl);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.upload.onprogress = ev => {
+                    if (ev.lengthComputable) {
+                        setBar(ev.loaded / ev.total * 100);
+                        statusText.innerText = 'Uploading... ' + mb(ev.loaded) + ' of ' + mb(ev.total) + ' MB';
+                    }
+                };
+                xhr.upload.onload = () => { statusText.innerText = 'Upload complete. Starting...'; };
+                xhr.onload = () => {
+                    let data = null;
+                    try { data = JSON.parse(xhr.responseText); } catch (err) { data = null; }
+                    if (xhr.status === 200 && data && data.ok) {
+                        pollJob(data.status_url, data.result_url, form);
+                    } else {
+                        showError('The upload was not accepted (error ' + xhr.status + '). Please reload the page and try again.', form);
+                    }
+                };
+                xhr.onerror = () => showError('Upload failed. Please check your internet connection and try again.', form);
+                xhr.ontimeout = () => showError('The upload timed out. Please try again.', form);
+                xhr.send(new FormData(this));
             });
         });
+
+        // Page reloaded while a file is still processing: keep showing the progress
+        const resumeEl = document.getElementById('resume-job');
+        if (resumeEl) {
+            const info = JSON.parse(resumeEl.textContent);
+            overlay.style.display = 'flex';
+            pollJob(info.status_url, info.result_url, null);
+        }
     </script>
 </body>
 </html>

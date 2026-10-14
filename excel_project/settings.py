@@ -131,6 +131,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Background processing: files are processed in a background thread, status is kept in small files
+# under processed_files/jobs (no Redis/Celery needed). Max files processed at the same time per server process:
+MAX_CONCURRENT_JOBS = int(os.environ.get('MAX_CONCURRENT_JOBS', '2'))
+JOBS_RUN_INLINE = False   # tests switch this on so jobs run inside the request
+
 # Upload limits (Pro plan allows files up to 150 MB; enforced in views.validate_upload)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 160 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # isse bade file temp disk par jayenge

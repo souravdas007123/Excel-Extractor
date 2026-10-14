@@ -4,7 +4,7 @@ Django view tests. Run everything with:   python manage.py test
 """
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import UserProfile
@@ -104,3 +104,47 @@ class DownloadTests(TestCase):
 
     def test_malformed_token_is_404(self):
         self.assertEqual(self.client.get(reverse('download', args=['not-a-valid-token'])).status_code, 404)
+
+
+@override_settings(JOBS_RUN_INLINE=True)   # run the job inside the request so tests are deterministic
+class BackgroundJobTests(TestCase):
+    def start(self, text, name='leads.csv', **extra):
+        response = self.client.post(
+            reverse('start_job'), {**PROCESS_FLAGS, 'file_single': csv_upload(text, name), **extra}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['ok'])
+        return data
+
+    def test_job_runs_and_result_page_shows_report(self):
+        csv = "Name,Phone,State\nrahul sharma,+91 98765 43210,delhi\nRahul Sharma,9876543210,Delhi\n"
+        data = self.start(csv)
+        status = self.client.get(data['status_url']).json()
+        self.assertEqual((status['status'], status['progress']), ('done', 100))
+        page = self.client.get(data['result_url'])
+        self.assertTrue(page.context['single_success'])
+        self.assertEqual(page.context['s_duplicate_count'], 1)
+        # the download link from the result page must work for this browser session
+        download = self.client.get(page.context['s_download_uri'])
+        self.assertEqual(download.status_code, 200)
+
+    def test_free_limit_shows_upgrade_card_via_job(self):
+        rows = "\n".join(f"User {i},9{i:09d},Goa" for i in range(1001))
+        data = self.start("Name,Phone,State\n" + rows + "\n")
+        page = self.client.get(data['result_url'])
+        self.assertIn('limit_error', page.context)
+
+    def test_bad_input_becomes_error_on_result_page(self):
+        data = self.start("Name,Phone\nA,9999999999\n")
+        page = self.client.get(data['result_url'])
+        self.assertIn('Columns not found', page.context['error'])
+
+    def test_other_users_cannot_see_a_job(self):
+        data = self.start("Name,Phone,State\nA One,9111111111,UP\n")
+        stranger = self.client_class()
+        self.assertEqual(stranger.get(data['status_url']).status_code, 404)
+        self.assertEqual(stranger.get(data['result_url']).status_code, 302)   # sent back to the app page
+
+    def test_malformed_job_id_is_404(self):
+        self.assertEqual(self.client.get(reverse('job_status', args=['../etc'])).status_code, 404)
